@@ -1,0 +1,67 @@
+.allergen-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--gold-border);
+  border-left: 4px solid var(--gold);
+  border-radius: 4px;
+  padding: 16px 20px;
+  margin-top: 40px;
+}
+
+/* Icon circle */
+.allergen-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gold-bg);
+  border: 1.5px solid var(--gold-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.allergen-icon-wrap svg { color: var(--gold); }
+
+/* Text */
+.allergen-text strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  margin-bottom: 5px;
+}
+.allergen-text p {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--text-2);
+  line-height: 1.75;
+}
+.allergen-text p strong {
+  display: inline;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-1);
+  margin-bottom: 0;
+}
+
+/* Banner variant — full width, more padding */
+.allergen-banner {
+  padding: 20px 28px;
+  margin-top: 0;
+}
+.allergen-banner .allergen-icon-wrap {
+  width: 44px;
+  height: 44px;
+}
+.allergen-banner .allergen-text p { font-size: 14px; }
+
+@media (max-width: 500px) {
+  .allergen-bar { flex-direction: column; gap: 12px; }
+  .allergen-icon-wrap { align-self: flex-start; }
+}

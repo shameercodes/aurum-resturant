@@ -1,0 +1,23 @@
+.contact-page { background: var(--black); }
+.contact-layout { display: grid; grid-template-columns: 1fr 1.1fr; gap: 6rem; align-items: start; }
+
+.info-card { display: flex; gap: 14px; align-items: flex-start; background: var(--surface-2); border: 1px solid rgba(255,255,255,0.05); padding: 18px 20px; margin-bottom: 3px; transition: border-color var(--transition); }
+.info-card:hover { border-color: var(--gold-border); }
+.info-icon { color: var(--gold); flex-shrink: 0; margin-top: 2px; display: flex; }
+.info-link { transition: color var(--transition); }
+.info-link:hover { color: var(--gold) !important; }
+.contact-lead { margin-top: 16px; margin-bottom: 28px; }
+.map-iframe { width: 100%; height: 200px; border: none; display: block; filter: grayscale(0.4) contrast(1.05); }
+.map-label a { color: var(--text-3); transition: color var(--transition); }
+.map-label a:hover { color: var(--gold); }
+.info-title { font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 5px; }
+.info-val { font-size: 13px; font-weight: 300; color: var(--text-2); line-height: 1.6; }
+
+.contact-map { margin-top: 4px; border: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+.map-label { padding: 10px 14px; font-size: 11px; color: var(--text-3); font-weight: 300; letter-spacing: 0.06em; background: var(--surface-2); border-top: 1px solid rgba(255,255,255,0.05); }
+
+/* Reuse booking-form, form-section-title, form-row-2 from Reservations.css */
+.contact-form-wrap .booking-form textarea { min-height: 160px; }
+
+@media (max-width: 960px) { .contact-layout { grid-template-columns: 1fr; gap: 3rem; } }
+@media (max-width: 600px) { .form-row-2 { grid-template-columns: 1fr; } }

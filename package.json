@@ -1,0 +1,13 @@
+{
+  "name": "aurum-eats",
+  "version": "2.0.0",
+  "description": "Aurum Eats — Full-stack food delivery MERN app",
+  "scripts": {
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
+    "dev": "concurrently -n server,client -c blue,green \"cd server && npm run dev\" \"cd client && npm run dev\"",
+    "start": "cd server && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
