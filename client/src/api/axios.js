@@ -1,11 +1,7 @@
 import axios from 'axios';
 
 // In dev, empty baseURL uses the CRA proxy (client/package.json → localhost:5000).
-const baseURL =
-  process.env.REACT_APP_API_URL?.trim() ||
-  (process.env.NODE_ENV === "production"
-    ? "https://aurum-resturant.onrender.com"
-    : "");
+const baseURL = process.env.REACT_APP_API_URL?.trim();
 
 const api = axios.create({
   baseURL,
