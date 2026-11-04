@@ -25,7 +25,14 @@ connectDB().then(async () => {
   await seedAdmin();
 });
 connectCloudinary();
-verifyEmailConfig();
+
+verifyEmailConfig()
+  .then((ready) => {
+    console.log(`📧 Email configuration: ${ready ? "READY" : "NOT READY"}`);
+  })
+  .catch((err) => {
+    console.error("❌ Email verification error:", err.message);
+  });
 
 const app = express();
 app.set("trust proxy", 1);
