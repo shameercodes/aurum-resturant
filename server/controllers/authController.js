@@ -11,7 +11,13 @@ const deliverOtp = async (email, name, otp) => {
   try {
     await sendOtpEmail(email, name, otp);
   } catch (err) {
-    console.error('OTP email failed:', err.message, err.response || '');
+    // console.error('OTP email failed:', err.message, err.response || '');
+    console.error("OTP email failed:", {
+      message: err.message,
+      code: err.code,
+      response: err.response,
+      command: err.command,
+    });
     throw new AppError(
       'Could not send verification email. Check spam folder, or try again in a few minutes.',
       502
