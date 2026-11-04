@@ -56,9 +56,14 @@ app.all('*', (req, res, next) =>
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-  console.log(`🚀 ${process.env.APP_NAME || 'Aurum Eats'} API → http://localhost:${PORT}`);
-  console.log(`📧 Admin: ${process.env.ADMIN_EMAIL || 'admin@aurumrestaurant.co.uk'}`);
+
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(
+    `🚀 ${process.env.APP_NAME || "Aurum Eats"} API running on port ${PORT}`,
+  );
+  console.log(
+    `📧 Admin: ${process.env.ADMIN_EMAIL || "admin@aurumrestaurant.co.uk"}`,
+  );
 });
 
 const shutdown = signal => {
