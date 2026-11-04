@@ -5,22 +5,26 @@ const { sendOtpEmail, sendPasswordResetOtp } = require('../config/email');
 const { assertString, digitsOnly, sanitizeName } = require('../utils/fieldValidation');
 
 const deliverOtp = async (email, name, otp) => {
-  if (process.env.DEV_SHOW_OTP === 'true') {
+  console.log("📨 OTP process started for:", email);
+
+  if (process.env.DEV_SHOW_OTP === "true") {
     console.log(`🔐 DEV OTP for ${email}: ${otp}`);
   }
+
   try {
     await sendOtpEmail(email, name, otp);
+    console.log("✅ OTP email delivery completed for:", email);
   } catch (err) {
-    // console.error('OTP email failed:', err.message, err.response || '');
-    console.error("OTP email failed:", {
+    console.error("❌ OTP email failed:", {
       message: err.message,
       code: err.code,
       response: err.response,
       command: err.command,
     });
+
     throw new AppError(
-      'Could not send verification email. Check spam folder, or try again in a few minutes.',
-      502
+      "Could not send verification email. Check spam folder, or try again in a few minutes.",
+      502,
     );
   }
 };

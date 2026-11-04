@@ -26,6 +26,8 @@ connectDB().then(async () => {
 });
 connectCloudinary();
 
+console.log("📧 Starting email verification...");
+
 verifyEmailConfig()
   .then((ready) => {
     console.log(`📧 Email configuration: ${ready ? "READY" : "NOT READY"}`);
