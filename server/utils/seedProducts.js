@@ -1,27 +1,28 @@
-const Product = require('../models/Product');
-const CATALOG = require('./productCatalog');
+const Product = require("../models/Product");
+const CATALOG = require("./productCatalog");
 
 module.exports = async function seedProducts() {
   let added = 0;
-  let updated = 0;
+  let skipped = 0;
 
   for (const item of CATALOG) {
-    const existing = await Product.findOne({ name: item.name });
+    // Check whether this product already exists.
+    const existing = await Product.findOne({ name: item.name }).select("_id");
+
     if (existing) {
-      existing.description = item.description;
-      existing.price = item.price;
-      existing.category = item.category;
-      existing.image = item.image;
-      existing.rating = item.rating;
-      existing.stock = item.stock;
-      await existing.save();
-      updated += 1;
-    } else {
-      await Product.create(item);
-      added += 1;
+      // Never overwrite products managed by the admin.
+      skipped += 1;
+      continue;
     }
+
+    // Insert only products that do not exist.
+    await Product.create(item);
+    added += 1;
   }
 
   const total = await Product.countDocuments();
-  console.log(`✅ Menu sync: ${added} added, ${updated} updated (${total} total)`);
+
+  console.log(
+    `✅ Product seeding complete: ${added} added, ${skipped} preserved (${total} total)`,
+  );
 };

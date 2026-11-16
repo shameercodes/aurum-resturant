@@ -84,7 +84,7 @@ export default function Checkout() {
             placeholder="Street address"
             required
             value={address.street}
-            onChange={v => setField('street', v)}
+            onChange={(v) => setField("street", v)}
             error={errors.street}
           />
           <ValidatedInput
@@ -93,7 +93,7 @@ export default function Checkout() {
             placeholder="City (letters only)"
             required
             value={address.city}
-            onChange={v => setField('city', v)}
+            onChange={(v) => setField("city", v)}
             error={errors.city}
           />
           <ValidatedInput
@@ -102,7 +102,7 @@ export default function Checkout() {
             placeholder="Postcode"
             required
             value={address.zip}
-            onChange={v => setField('zip', v)}
+            onChange={(v) => setField("zip", v)}
             error={errors.zip}
           />
           <ValidatedInput
@@ -111,24 +111,34 @@ export default function Checkout() {
             placeholder="Phone (numbers only)"
             required
             value={address.phone}
-            onChange={v => setField('phone', v)}
+            onChange={(v) => setField("phone", v)}
             error={errors.phone}
           />
           <textarea
             name="notes"
             value={address.notes}
-            onChange={e => setField('notes', sanitize.text(e.target.value, 300))}
+            onChange={(e) =>
+              setField("notes", sanitize.text(e.target.value, 300))
+            }
             placeholder="Delivery notes (optional)"
             rows={3}
             className="input-field"
           />
           <h2 className="pt-4 font-semibold">Payment</h2>
           {[
-            { id: 'cod', label: 'Cash on delivery' },
-            { id: 'mock', label: 'Card (mock payment)' },
-          ].map(m => (
-            <label key={m.id} className={`card flex cursor-pointer items-center gap-3 p-4 ${payment === m.id ? 'border-brand-500 ring-2 ring-brand-500/20' : ''}`}>
-              <input type="radio" name="pay" checked={payment === m.id} onChange={() => setPayment(m.id)} />
+            { id: "cod", label: "Cash on delivery" },
+            { id: "mock", label: "Test payment (not a real transaction)" },
+          ].map((m) => (
+            <label
+              key={m.id}
+              className={`card flex cursor-pointer items-center gap-3 p-4 ${payment === m.id ? "border-brand-500 ring-2 ring-brand-500/20" : ""}`}
+            >
+              <input
+                type="radio"
+                name="pay"
+                checked={payment === m.id}
+                onChange={() => setPayment(m.id)}
+              />
               {m.label}
             </label>
           ))}
@@ -136,9 +146,14 @@ export default function Checkout() {
         <div className="card h-fit p-6">
           <h2 className="font-semibold">Order summary</h2>
           <ul className="mt-4 space-y-2 text-sm">
-            {items.map(i => (
-              <li key={i._id} className="flex justify-between text-gray-600 dark:text-gray-400">
-                <span>{i.name} × {i.quantity}</span>
+            {items.map((i) => (
+              <li
+                key={i._id}
+                className="flex justify-between text-gray-600 dark:text-gray-400"
+              >
+                <span>
+                  {i.name} × {i.quantity}
+                </span>
                 <span>£{(i.price * i.quantity).toFixed(2)}</span>
               </li>
             ))}
@@ -148,8 +163,12 @@ export default function Checkout() {
             <span className="text-brand-600">£{total.toFixed(2)}</span>
           </div>
           {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
-          <button type="submit" disabled={loading} className="btn-primary mt-6 w-full">
-            {loading ? 'Placing order…' : 'Place order'}
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary mt-6 w-full"
+          >
+            {loading ? "Placing order…" : "Place order"}
           </button>
         </div>
       </form>

@@ -86,18 +86,53 @@ const validateProductBody = body => ({
   isActive: !(body.isActive === 'false' || body.isActive === false),
 });
 
-const validateAddress = address => {
-  if (!address || typeof address !== 'object') throw new AppError('Delivery address is required', 400);
+
+const validateAddress = (address) => {
+  if (!address || typeof address !== "object" || Array.isArray(address)) {
+    throw new AppError("Delivery address is required", 400);
+  }
+
+  const notes = address.notes ?? "";
+
+  if (typeof notes !== "string") {
+    throw new AppError("Notes must be text", 400);
+  }
+
   return {
-    street: assertString(address.street, 'Street', { min: 3, max: 120, pattern: 'address' }),
-    city: assertString(address.city, 'City', { min: 2, max: 80, pattern: 'text' }),
-    zip: assertString(sanitizeZip(address.zip), 'Postcode', { min: 3, max: 12, pattern: 'zip' }),
-    phone: assertString(digitsOnly(address.phone, 15), 'Phone', { min: 10, max: 15, pattern: 'phone' }),
-    notes: address.notes?.trim()
-      ? assertString(address.notes, 'Notes', { min: 1, max: 300, pattern: 'text' })
-      : '',
+    street: assertString(address.street, "Street", {
+      min: 3,
+      max: 120,
+      pattern: "address",
+    }),
+
+    city: assertString(address.city, "City", {
+      min: 2,
+      max: 80,
+      pattern: "text",
+    }),
+
+    zip: assertString(sanitizeZip(address.zip), "Postcode", {
+      min: 3,
+      max: 12,
+      pattern: "zip",
+    }),
+
+    phone: assertString(digitsOnly(address.phone, 15), "Phone", {
+      min: 10,
+      max: 15,
+      pattern: "phone",
+    }),
+
+    notes: notes.trim()
+      ? assertString(notes, "Notes", {
+          min: 1,
+          max: 300,
+          pattern: "text",
+        })
+      : "",
   };
 };
+
 
 module.exports = {
   PATTERNS,
