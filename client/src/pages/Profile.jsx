@@ -12,6 +12,115 @@ const STATUS_COLORS = {
   cancelled: "bg-red-100 text-red-800",
 };
 
+const TRACKING_STEPS = [
+  { status: "pending", label: "Order Placed" },
+  { status: "preparing", label: "Preparing" },
+  { status: "out_for_delivery", label: "Out for Delivery" },
+  { status: "delivered", label: "Delivered" },
+];
+
+
+function OrderTimeline({ order }) {
+  const history = Array.isArray(order.statusHistory) ? order.statusHistory : [];
+
+  const formatDate = (date) => {
+    if (!date) return "Date unavailable";
+
+    const parsed = new Date(date);
+
+    return Number.isNaN(parsed.getTime())
+      ? "Date unavailable"
+      : parsed.toLocaleString();
+  };
+
+  if (order.status === "cancelled") {
+    const cancellation = [...history]
+      .reverse()
+      .find((entry) => entry.status === "cancelled");
+
+    return (
+      <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-900/20">
+        <p className="font-semibold text-red-700 dark:text-red-300">
+          Order Cancelled
+        </p>
+
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          {formatDate(cancellation?.changedAt || order.cancelledAt)}
+        </p>
+
+        {order.cancellationReason && (
+          <p className="mt-2 text-sm text-red-700 dark:text-red-300">
+            Reason: {order.cancellationReason}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  const currentIndex = TRACKING_STEPS.findIndex(
+    (step) => step.status === order.status,
+  );
+
+  return (
+    <div className="mt-5">
+      <h3 className="mb-4 font-semibold">Order Tracking</h3>
+
+      <div className="space-y-0">
+        {TRACKING_STEPS.map((step, index) => {
+          const completed = currentIndex >= index;
+
+          const historyEntry = history.find(
+            (entry) => entry.status === step.status,
+          );
+
+          return (
+            <div key={step.status} className="flex gap-3">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                    completed
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-200 text-gray-500 dark:bg-gray-700"
+                  }`}
+                >
+                  {completed ? "✓" : index + 1}
+                </div>
+
+                {index !== TRACKING_STEPS.length - 1 && (
+                  <div
+                    className={`min-h-10 w-0.5 ${
+                      currentIndex > index
+                        ? "bg-green-500"
+                        : "bg-gray-200 dark:bg-gray-700"
+                    }`}
+                  />
+                )}
+              </div>
+
+              <div className="pb-6">
+                <p className="text-sm font-semibold">
+                  {step.label}
+                  {order.status === step.status && (
+                    <span className="ml-2 text-xs text-brand-600">Current</span>
+                  )}
+                </p>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  {historyEntry
+                    ? formatDate(historyEntry.changedAt)
+                    : completed
+                      ? "Date unavailable"
+                      : "Waiting for update"}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function Profile() {
   const { user } = useAuth();
   const location = useLocation();
@@ -123,12 +232,8 @@ export default function Profile() {
               <p className="mt-1 font-bold text-brand-600">
                 £{Number(o.totalAmount).toFixed(2)} · {o.items?.length} items
               </p>
+              <OrderTimeline order={o} />
 
-              {o.cancellationReason && (
-                <p className="mt-2 text-sm text-red-600">
-                  Cancellation reason: {o.cancellationReason}
-                </p>
-              )}
 
               {canCancel(o.status) && (
                 <div className="mt-4">
