@@ -37,13 +37,21 @@ const DRINK_BY_NAME = {
   'Espresso Shot': DRINK_IMAGES.espresso,
 };
 
+
 export function getProductImage(product) {
+  // Always prefer the saved product image (Cloudinary).
+  if (product?.image?.trim()) {
+    return product.image.trim();
+  }
+
+  // Use drink-specific fallback only when no product image exists.
   if (product?.name && DRINK_BY_NAME[product.name]) {
     return DRINK_BY_NAME[product.name];
   }
-  if (product?.image?.trim()) return product.image.trim();
+
   return CATEGORY_FALLBACK[product?.category] || DEFAULT_FALLBACK;
 }
+
 
 export function getFallbackChain(product) {
   const chain = [];
