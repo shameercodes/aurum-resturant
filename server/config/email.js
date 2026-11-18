@@ -147,23 +147,115 @@ exports.sendPasswordResetOtp = async (email, name, otp) => {
 };
 
 exports.sendOrderConfirmation = async (user, order) => {
+  const orderNumber = order._id.toString().slice(-6).toUpperCase();
+
   const itemsHtml = order.items
     .map(
-      (i) =>
-        `<tr><td style="padding:8px 0;color:#ccc;">${i.name} × ${i.quantity}</td><td style="text-align:right;color:#fff;">£${(i.price * i.quantity).toFixed(2)}</td></tr>`,
+      (item) =>
+        `<tr>
+          <td style="padding:8px 0;color:#ccc;">
+            ${item.name} × ${item.quantity}
+          </td>
+          <td style="text-align:right;color:#fff;">
+            £${(item.price * item.quantity).toFixed(2)}
+          </td>
+        </tr>`,
     )
     .join("");
 
   await sendMail({
     to: user.email,
-    subject: `${brand} — Order #${order._id.toString().slice(-6).toUpperCase()} confirmed`,
+    subject: `${brand} — Your Order #${orderNumber} is Confirmed`,
+    text: `Hi ${user.name},
+
+Thank you for your order!
+
+Your order #${orderNumber} has been successfully received.
+
+Total: £${order.totalAmount.toFixed(2)}
+Payment: ${order.paymentMethod.toUpperCase()}
+Status: ${order.status}
+
+Thank you for choosing ${brand}!`,
+
+    html: wrap(`
+      <h2 style="color:#22c55e;">Order Confirmed!</h2>
+
+      <p>Hi ${user.name},</p>
+
+      <p>
+        Thank you for your order! We have successfully received
+        your order and will update you as it progresses.
+      </p>
+
+      <p>
+        Order number:
+        <strong>#${orderNumber}</strong>
+      </p>
+
+      <table style="width:100%;margin:20px 0;border-collapse:collapse;">
+        ${itemsHtml}
+      </table>
+
+      <p style="font-size:1.1rem;">
+        <strong>Total: £${order.totalAmount.toFixed(2)}</strong>
+      </p>
+
+      <p style="color:#aaa;font-size:14px;">
+        Payment: ${order.paymentMethod.toUpperCase()}
+      </p>
+
+      <p style="color:#aaa;font-size:14px;">
+        Order Status: ${order.status}
+      </p>
+
+      <p style="color:#aaa;font-size:14px;">
+        Delivery Address:
+        ${order.address.street}, ${order.address.city}
+        ${order.address.zip}
+      </p>
+    `),
+  });
+};
+
+exports.sendOrderStatusEmail = async (user, order) => {
+  const orderNumber = order._id.toString().slice(-6).toUpperCase();
+
+  const statusMessages = {
+    preparing: {
+      subject: "Your order is being prepared",
+      message:
+        "Our kitchen is preparing your order. We'll notify you when it is on its way.",
+    },
+    out_for_delivery: {
+      subject: "Your order is out for delivery",
+      message: "Your order is on its way! Please get ready to receive it.",
+    },
+    delivered: {
+      subject: "Your order has been delivered",
+      message: "Your order has been delivered. Thank you for choosing us!",
+    },
+    cancelled: {
+      subject: "Your order has been cancelled",
+      message:
+        "Your order has been cancelled. Please contact us if you have any questions.",
+    },
+  };
+
+  const notification = statusMessages[order.status];
+
+  if (!notification) return;
+
+  await sendMail({
+    to: user.email,
+    subject: `${brand} — ${notification.subject} (#${orderNumber})`,
+    text: `Hi ${user.name},\n\n${notification.message}\n\nOrder #${orderNumber}`,
     html: wrap(`
       <p>Hi ${user.name},</p>
-      <p>Thanks for your order! We're preparing it now.</p>
-      <table style="width:100%;margin:20px 0;border-collapse:collapse;">${itemsHtml}</table>
-      <p style="font-size:1.1rem;"><strong>Total: £${order.totalAmount.toFixed(2)}</strong></p>
-      <p style="color:#aaa;font-size:14px;">Payment: ${order.paymentMethod.toUpperCase()} · Status: ${order.status}</p>
-      <p style="color:#aaa;font-size:14px;">Deliver to: ${order.address.street}, ${order.address.city} ${order.address.zip}</p>
+      <h2 style="color:#f59e0b;">${notification.subject}</h2>
+      <p>${notification.message}</p>
+      <p>Order number: <strong>#${orderNumber}</strong></p>
+      <p>Current status: <strong>${order.status.replaceAll("_", " ")}</strong></p>
     `),
   });
 };

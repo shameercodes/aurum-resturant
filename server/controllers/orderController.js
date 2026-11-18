@@ -6,7 +6,10 @@ const Product = require("../models/Product");
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
 
-const { sendOrderConfirmation } = require("../config/email");
+const {
+  sendOrderConfirmation,
+  sendOrderStatusEmail,
+} = require("../config/email");
 const { validateAddress } = require("../utils/fieldValidation");
 
 const VALID_PAYMENT_METHODS = ["cod", "stripe", "mock"];
@@ -161,7 +164,7 @@ exports.createOrder = asyncHandler(async (req, res) => {
     "name email",
   );
 
-  if (populatedOrder?.user) {
+  if (populatedOrder?.user?.email) {
     sendOrderConfirmation(populatedOrder.user, populatedOrder).catch(
       (error) => {
         console.error("Order confirmation email failed:", error.message);
@@ -235,8 +238,7 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
   });
 });
 
-
- // UPDATE ORDER STATUS (ADMIN)
+// UPDATE ORDER STATUS (ADMIN)
 exports.updateOrderStatus = asyncHandler(async (req, res) => {
   const { status, cancellationReason } = req.body;
 
@@ -260,7 +262,7 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
       if (!allowedTransitions.includes(status)) {
         throw new AppError(
           `Cannot change order status from ${order.status} to ${status}`,
-          400
+          400,
         );
       }
 
@@ -269,21 +271,20 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
           const result = await Product.updateOne(
             { _id: item.product },
             { $inc: { stock: item.quantity } },
-            { session }
+            { session },
           );
 
           if (result.matchedCount !== 1) {
             throw new AppError(
               `Cannot restore stock for ${item.name}: product not found`,
-              409
+              409,
             );
           }
         }
 
         order.cancelledAt = new Date();
         order.cancellationReason =
-          typeof cancellationReason === "string" &&
-          cancellationReason.trim()
+          typeof cancellationReason === "string" && cancellationReason.trim()
             ? cancellationReason.trim().slice(0, 300)
             : "Cancelled by administrator";
       }
@@ -300,7 +301,7 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
         note:
           status === "cancelled"
             ? order.cancellationReason
-            : `Order ${status.replaceAll("_", " ")}`
+            : `Order ${status.replaceAll("_", " ")}`,
       });
 
       await order.save({ session });
@@ -310,11 +311,26 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
     await session.endSession();
   }
 
+  // Send notification after successful status update
+  notifyOrderStatus(updatedOrder._id);
+
   res.json({
     success: true,
-    data: updatedOrder
+    data: updatedOrder,
   });
 });
+
+const notifyOrderStatus = async (orderId) => {
+  try {
+    const order = await Order.findById(orderId).populate("user", "name email");
+
+    if (order?.user) {
+      await sendOrderStatusEmail(order.user, order);
+    }
+  } catch (error) {
+    console.error("Order status notification failed:", error.message);
+  }
+};
 
 // CANCEL ORDER (CUSTOMER)
 exports.cancelMyOrder = asyncHandler(async (req, res) => {
@@ -327,7 +343,7 @@ exports.cancelMyOrder = asyncHandler(async (req, res) => {
     await session.withTransaction(async () => {
       const order = await Order.findOne({
         _id: req.params.id,
-        user: req.user._id
+        user: req.user._id,
       }).session(session);
 
       if (!order) {
@@ -335,23 +351,20 @@ exports.cancelMyOrder = asyncHandler(async (req, res) => {
       }
 
       if (!["pending", "preparing"].includes(order.status)) {
-        throw new AppError(
-          "This order can no longer be cancelled",
-          400
-        );
+        throw new AppError("This order can no longer be cancelled", 400);
       }
 
       for (const item of order.items) {
         const result = await Product.updateOne(
           { _id: item.product },
           { $inc: { stock: item.quantity } },
-          { session }
+          { session },
         );
 
         if (result.matchedCount !== 1) {
           throw new AppError(
             `Cannot restore stock for ${item.name}: product not found`,
-            409
+            409,
           );
         }
       }
@@ -359,8 +372,7 @@ exports.cancelMyOrder = asyncHandler(async (req, res) => {
       order.status = "cancelled";
       order.cancelledAt = new Date();
       order.cancellationReason =
-        typeof cancellationReason === "string" &&
-        cancellationReason.trim()
+        typeof cancellationReason === "string" && cancellationReason.trim()
           ? cancellationReason.trim().slice(0, 300)
           : "Cancelled by customer";
 
@@ -371,7 +383,7 @@ exports.cancelMyOrder = asyncHandler(async (req, res) => {
       order.statusHistory.push({
         status: "cancelled",
         changedBy: req.user._id,
-        note: order.cancellationReason
+        note: order.cancellationReason,
       });
 
       await order.save({ session });
@@ -381,9 +393,12 @@ exports.cancelMyOrder = asyncHandler(async (req, res) => {
     await session.endSession();
   }
 
+  // Notify customer after successful cancellation
+  notifyOrderStatus(cancelledOrder._id);
+
   res.json({
     success: true,
     message: "Order cancelled successfully",
-    data: cancelledOrder
+    data: cancelledOrder,
   });
 });
