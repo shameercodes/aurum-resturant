@@ -1,28 +1,28 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Name is required'],
+      required: [true, "Name is required"],
       trim: true,
-      maxlength: [60, 'Name cannot exceed 60 characters'],
+      maxlength: [60, "Name cannot exceed 60 characters"],
     },
     email: {
       type: String,
-      required: [true, 'Email is required'],
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email'],
+      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
-      minlength: [8, 'Password must be at least 8 characters'],
+      required: [true, "Password is required"],
+      minlength: [8, "Password must be at least 8 characters"],
       select: false,
     },
     isVerified: { type: Boolean, default: false },
@@ -30,10 +30,14 @@ const userSchema = new mongoose.Schema(
     otpExpiry: { type: Date, select: false },
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user',
+      enum: ["user", "admin"],
+      default: "user",
     },
-    phone: { type: String, trim: true, default: '' },
+    tokenVersion: {
+      type: Number,
+      default: 0,
+    },
+    phone: { type: String, trim: true, default: "" },
     address: {
       street: String,
       city: String,
@@ -43,11 +47,11 @@ const userSchema = new mongoose.Schema(
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
@@ -57,20 +61,30 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 };
 
 userSchema.methods.getJwtToken = function () {
-  return jwt.sign({ id: this._id, role: this.role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '30d',
-  });
+  return jwt.sign(
+    {
+      id: this._id,
+      role: this.role,
+      tokenVersion: this.tokenVersion,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRE || "30d",
+    },
+  );
 };
 
 userSchema.methods.generateOtp = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  this.otp = crypto.createHash('sha256').update(otp).digest('hex');
-  this.otpExpiry = Date.now() + (parseInt(process.env.OTP_EXPIRE_MINUTES, 10) || 10) * 60 * 1000;
+  this.otp = crypto.createHash("sha256").update(otp).digest("hex");
+  this.otpExpiry =
+    Date.now() +
+    (parseInt(process.env.OTP_EXPIRE_MINUTES, 10) || 10) * 60 * 1000;
   return otp;
 };
 
 userSchema.methods.verifyOtp = function (enteredOtp) {
-  const hashed = crypto.createHash('sha256').update(enteredOtp).digest('hex');
+  const hashed = crypto.createHash("sha256").update(enteredOtp).digest("hex");
   return this.otp === hashed && this.otpExpiry > Date.now();
 };
 
@@ -80,10 +94,13 @@ userSchema.methods.clearOtp = function () {
 };
 
 userSchema.methods.getResetPasswordToken = function () {
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  this.resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
   this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
   return resetToken;
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);
