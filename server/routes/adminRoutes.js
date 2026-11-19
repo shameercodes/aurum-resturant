@@ -8,13 +8,15 @@ const {
   getUsers,
   updateUser,
   deleteUser,
-} = require('../controllers/adminController');
+  getSalesAnalytics,
+} = require("../controllers/adminController");
 const { protect, authorize } = require('../middleware/auth');
 const validateObjectId = require('../middleware/validateObjectId');
 
 router.use(protect, authorize('admin'));
 
 router.get('/dashboard', getDashboard);
+router.get("/sales-analytics", getSalesAnalytics);
 router.get('/products', getAllProducts);
 router.get('/orders', getAllOrders);
 router.get('/orders/:id', validateObjectId, getOrderById);

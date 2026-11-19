@@ -1,8 +1,8 @@
-const Order = require('../models/Order');
-const Product = require('../models/Product');
-const User = require('../models/User');
-const asyncHandler = require('../utils/asyncHandler');
-const AppError = require('../utils/AppError');
+const Order = require("../models/Order");
+const Product = require("../models/Product");
+const User = require("../models/User");
+const asyncHandler = require("../utils/asyncHandler");
+const AppError = require("../utils/AppError");
 
 exports.getDashboard = asyncHandler(async (req, res) => {
   const today = new Date();
@@ -23,38 +23,44 @@ exports.getDashboard = asyncHandler(async (req, res) => {
   ] = await Promise.all([
     Order.countDocuments(),
     Order.aggregate([
-      { $match: { status: { $ne: 'cancelled' } } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } },
+      { $match: { status: { $ne: "cancelled" } } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } },
     ]),
-    User.countDocuments({ role: 'user' }),
+    User.countDocuments({ role: "user" }),
     Product.countDocuments(),
     Order.countDocuments({ createdAt: { $gte: today } }),
-    Order.countDocuments({ status: 'pending' }),
+    Order.countDocuments({ status: "pending" }),
     Order.find()
-      .populate('user', 'name email')
+      .populate("user", "name email")
       .sort({ createdAt: -1 })
       .limit(10)
       .lean(),
-    Order.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+    Order.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
     Product.find({ stock: { $lte: 10 }, isActive: true })
       .sort({ stock: 1 })
       .limit(8)
       .lean(),
     Order.aggregate([
-      { $match: { status: { $ne: 'cancelled' } } },
-      { $unwind: '$items' },
+      { $match: { status: { $ne: "cancelled" } } },
+      { $unwind: "$items" },
       {
         $group: {
-          _id: '$items.name',
-          sold: { $sum: '$items.quantity' },
-          revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+          _id: "$items.name",
+          sold: { $sum: "$items.quantity" },
+          revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } },
         },
       },
       { $sort: { sold: -1 } },
       { $limit: 5 },
     ]),
     Product.aggregate([
-      { $group: { _id: '$category', count: { $sum: 1 }, avgPrice: { $avg: '$price' } } },
+      {
+        $group: {
+          _id: "$category",
+          count: { $sum: 1 },
+          avgPrice: { $avg: "$price" },
+        },
+      },
       { $sort: { count: -1 } },
     ]),
   ]);
@@ -79,37 +85,41 @@ exports.getDashboard = asyncHandler(async (req, res) => {
 
 exports.getAllProducts = asyncHandler(async (req, res) => {
   const filter = {};
-  if (req.query.category && req.query.category !== 'all') filter.category = req.query.category;
+  if (req.query.category && req.query.category !== "all")
+    filter.category = req.query.category;
   if (req.query.search) {
     filter.$or = [
-      { name: { $regex: req.query.search, $options: 'i' } },
-      { description: { $regex: req.query.search, $options: 'i' } },
+      { name: { $regex: req.query.search, $options: "i" } },
+      { description: { $regex: req.query.search, $options: "i" } },
     ];
   }
-  if (req.query.lowStock === 'true') filter.stock = { $lte: 10 };
+  if (req.query.lowStock === "true") filter.stock = { $lte: 10 };
 
-  const products = await Product.find(filter).sort({ category: 1, name: 1 }).lean();
+  const products = await Product.find(filter)
+    .sort({ category: 1, name: 1 })
+    .lean();
   res.json({ success: true, count: products.length, data: products });
 });
 
 exports.getAllOrders = asyncHandler(async (req, res) => {
   const filter = {};
-  if (req.query.status && req.query.status !== 'all') filter.status = req.query.status;
+  if (req.query.status && req.query.status !== "all")
+    filter.status = req.query.status;
   if (req.query.paymentStatus) filter.paymentStatus = req.query.paymentStatus;
 
   let orders = await Order.find(filter)
-    .populate('user', 'name email phone')
+    .populate("user", "name email phone")
     .sort({ createdAt: -1 })
     .lean();
 
   if (req.query.search) {
     const s = req.query.search.toLowerCase();
     orders = orders.filter(
-      o =>
+      (o) =>
         o._id.toString().toLowerCase().includes(s) ||
         o.user?.name?.toLowerCase().includes(s) ||
         o.user?.email?.toLowerCase().includes(s) ||
-        o.address?.phone?.includes(s)
+        o.address?.phone?.includes(s),
     );
   }
 
@@ -118,25 +128,29 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
 
 exports.getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id)
-    .populate('user', 'name email phone')
-    .populate('items.product', 'name category')
+    .populate("user", "name email phone")
+    .populate("items.product", "name category")
     .lean();
-  if (!order) throw new AppError('Order not found', 404);
+  if (!order) throw new AppError("Order not found", 404);
   res.json({ success: true, data: order });
 });
 
 exports.getUsers = asyncHandler(async (req, res) => {
   const filter = {};
-  if (req.query.role && req.query.role !== 'all') filter.role = req.query.role;
-  if (req.query.verified === 'true') filter.isVerified = true;
-  if (req.query.verified === 'false') filter.isVerified = false;
+  if (req.query.role && req.query.role !== "all") filter.role = req.query.role;
+  if (req.query.verified === "true") filter.isVerified = true;
+  if (req.query.verified === "false") filter.isVerified = false;
 
-  let users = await User.find(filter).select('-password -otp -otpExpiry').sort({ createdAt: -1 }).lean();
+  let users = await User.find(filter)
+    .select("-password -otp -otpExpiry")
+    .sort({ createdAt: -1 })
+    .lean();
 
   if (req.query.search) {
     const s = req.query.search.toLowerCase();
     users = users.filter(
-      u => u.name?.toLowerCase().includes(s) || u.email?.toLowerCase().includes(s)
+      (u) =>
+        u.name?.toLowerCase().includes(s) || u.email?.toLowerCase().includes(s),
     );
   }
 
@@ -147,7 +161,8 @@ exports.updateUser = asyncHandler(async (req, res) => {
   const { role, isVerified } = req.body;
   const updates = {};
   if (role !== undefined) {
-    if (!['user', 'admin'].includes(role)) throw new AppError('Invalid role', 400);
+    if (!["user", "admin"].includes(role))
+      throw new AppError("Invalid role", 400);
     updates.role = role;
   }
   if (isVerified !== undefined) updates.isVerified = Boolean(isVerified);
@@ -155,21 +170,176 @@ exports.updateUser = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(req.params.id, updates, {
     new: true,
     runValidators: true,
-  }).select('-password');
-  if (!user) throw new AppError('User not found', 404);
-  if (user._id.toString() === req.user._id.toString() && role === 'user') {
-    throw new AppError('Cannot demote your own admin account', 400);
+  }).select("-password");
+  if (!user) throw new AppError("User not found", 404);
+  if (user._id.toString() === req.user._id.toString() && role === "user") {
+    throw new AppError("Cannot demote your own admin account", 400);
   }
   res.json({ success: true, data: user });
 });
 
 exports.deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
-  if (!user) throw new AppError('User not found', 404);
+  if (!user) throw new AppError("User not found", 404);
   if (user._id.toString() === req.user._id.toString()) {
-    throw new AppError('Cannot delete your own account', 400);
+    throw new AppError("Cannot delete your own account", 400);
   }
-  if (user.role === 'admin') throw new AppError('Cannot delete admin users', 400);
+  if (user.role === "admin")
+    throw new AppError("Cannot delete admin users", 400);
   await user.deleteOne();
-  res.json({ success: true, message: 'User deleted' });
+  res.json({ success: true, message: "User deleted" });
+});
+
+exports.getSalesAnalytics = asyncHandler(async (req, res) => {
+  const { period = "monthly", startDate, endDate } = req.query;
+
+  const now = new Date();
+  let start;
+  let end = new Date(now);
+
+  // Custom date range
+  if (startDate || endDate) {
+    if (!startDate || !endDate) {
+      throw new AppError("Both startDate and endDate are required", 400);
+    }
+
+    start = new Date(`${startDate}T00:00:00.000Z`);
+    end = new Date(`${endDate}T23:59:59.999Z`);
+
+    if (
+      Number.isNaN(start.getTime()) ||
+      Number.isNaN(end.getTime()) ||
+      start > end
+    ) {
+      throw new AppError("Invalid date range", 400);
+    }
+  } else {
+    switch (period) {
+      case "daily":
+        start = new Date(now);
+        start.setUTCDate(start.getUTCDate() - 6);
+        start.setUTCHours(0, 0, 0, 0);
+        break;
+
+      case "weekly":
+        start = new Date(now);
+        start.setUTCDate(start.getUTCDate() - 7 * 7);
+        start.setUTCHours(0, 0, 0, 0);
+        break;
+
+      case "monthly":
+        start = new Date(now);
+        start.setUTCMonth(start.getUTCMonth() - 11);
+        start.setUTCDate(1);
+        start.setUTCHours(0, 0, 0, 0);
+        break;
+
+      default:
+        throw new AppError("Invalid analytics period", 400);
+    }
+  }
+
+  const match = {
+    status: { $ne: "cancelled" },
+    createdAt: { $gte: start, $lte: end },
+  };
+
+  const [summary, revenueTrend, topProducts, previousSummary] =
+    await Promise.all([
+      Order.aggregate([
+        { $match: match },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: "$totalAmount" },
+            totalOrders: { $sum: 1 },
+            averageOrderValue: { $avg: "$totalAmount" },
+          },
+        },
+      ]),
+
+      Order.aggregate([
+        { $match: match },
+        {
+          $group: {
+            _id: {
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" },
+              day: { $dayOfMonth: "$createdAt" },
+            },
+            revenue: { $sum: "$totalAmount" },
+            orders: { $sum: 1 },
+          },
+        },
+        { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } },
+      ]),
+
+      Order.aggregate([
+        { $match: match },
+        { $unwind: "$items" },
+        {
+          $group: {
+            _id: "$items.name",
+            unitsSold: { $sum: "$items.quantity" },
+            revenue: {
+              $sum: {
+                $multiply: ["$items.price", "$items.quantity"],
+              },
+            },
+          },
+        },
+        { $sort: { revenue: -1 } },
+        { $limit: 10 },
+      ]),
+
+      Order.aggregate([
+        {
+          $match: {
+            status: { $ne: "cancelled" },
+            createdAt: {
+              $gte: new Date(start.getTime() - (end - start + 1)),
+              $lt: start,
+            },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: "$totalAmount" },
+            totalOrders: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+  const current = summary[0] || {
+    totalRevenue: 0,
+    totalOrders: 0,
+    averageOrderValue: 0,
+  };
+
+  const previous = previousSummary[0] || {
+    totalRevenue: 0,
+    totalOrders: 0,
+  };
+
+  const revenueChange =
+    previous.totalRevenue > 0
+      ? ((current.totalRevenue - previous.totalRevenue) /
+          previous.totalRevenue) *
+        100
+      : null;
+
+  res.json({
+    success: true,
+    data: {
+      period: startDate && endDate ? "custom" : period,
+      dateRange: { start, end },
+      summary: current,
+      previousPeriod: previous,
+      revenueChange,
+      revenueTrend,
+      topProducts,
+    },
+  });
 });

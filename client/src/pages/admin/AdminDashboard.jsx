@@ -5,6 +5,7 @@ import {
   FiEdit2, FiTrash2, FiPlus, FiSearch, FiAlertTriangle, FiX, FiCheck,
   FiTrendingUp, FiClock, FiLogOut,
 } from 'react-icons/fi';
+import SalesAnalytics from "./SalesAnalytics";
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -13,10 +14,11 @@ import ValidatedInput from '../../components/ValidatedInput';
 import { sanitize, validators } from '../../utils/fieldValidation';
 
 const TABS = [
-  { id: 'dashboard', label: 'Overview', icon: FiTrendingUp },
-  { id: 'orders', label: 'Orders', icon: FiShoppingCart },
-  { id: 'products', label: 'Products', icon: FiPackage },
-  { id: 'users', label: 'Users', icon: FiUsers },
+  { id: "dashboard", label: "Overview", icon: FiTrendingUp },
+  { id: "orders", label: "Orders", icon: FiShoppingCart },
+  { id: "products", label: "Products", icon: FiPackage },
+  { id: "users", label: "Users", icon: FiUsers },
+  { id: "analytics", label: "Sales Analytics", icon: FiTrendingUp },
 ];
 
 const ORDER_STATUSES = ['pending', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
@@ -184,6 +186,7 @@ export default function AdminDashboard() {
       toast(err.response?.data?.message || 'Save failed', 'err');
     }
   };
+
 
   const startEditProduct = p => {
     setEditingProduct(p);
@@ -790,7 +793,9 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
-            )}
+              )}
+           {/* SALES ANALYTICS */}
+            {tab === 'analytics' && <SalesAnalytics />}
           </>
         )}
       </div>

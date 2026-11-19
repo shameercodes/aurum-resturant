@@ -8,7 +8,8 @@
     "react-dom": "^18.2.0",
     "react-icons": "^5.2.1",
     "react-router-dom": "^6.21.1",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "recharts": "^3.11.0"
   },
   "scripts": {
     "clear-cache": "node -e \"try{require('fs').rmSync('node_modules/.cache',{recursive:true,force:true})}catch(e){}\"",

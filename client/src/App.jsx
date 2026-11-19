@@ -18,6 +18,7 @@ import ResetPassword from './pages/ResetPassword';
 import Profile from './pages/Profile';
 import Contact from './pages/Contact';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import SalesAnalytics from "./pages/admin/SalesAnalytics";
 
 function Layout({ children }) {
   return (
@@ -36,18 +37,81 @@ export default function App() {
         <CartProvider>
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Layout><Home /></Layout>} />
-              <Route path="/menu" element={<Layout><Menu /></Layout>} />
-              <Route path="/cart" element={<Layout><Cart /></Layout>} />
-              <Route path="/contact" element={<Layout><Contact /></Layout>} />
+              <Route
+                path="/"
+                element={
+                  <Layout>
+                    <Home />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/menu"
+                element={
+                  <Layout>
+                    <Menu />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/cart"
+                element={
+                  <Layout>
+                    <Cart />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/contact"
+                element={
+                  <Layout>
+                    <Contact />
+                  </Layout>
+                }
+              />
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
               <Route path="/verify-otp" element={<VerifyOtp />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
-              <Route path="/profile" element={<Layout><ProtectedRoute><Profile /></ProtectedRoute></Layout>} />
-              <Route path="/admin" element={<Layout><ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute></Layout>} />
+              <Route
+                path="/checkout"
+                element={
+                  <Layout>
+                    <Checkout />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <Layout>
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  </Layout>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <Layout>
+                    <ProtectedRoute adminOnly>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  </Layout>
+                }
+              />
+              <Route
+                path="/admin/sales-analytics"
+                element={
+                  <Layout>
+                    <ProtectedRoute adminOnly>
+                      <SalesAnalytics />
+                    </ProtectedRoute>
+                  </Layout>
+                }
+              />
             </Routes>
           </BrowserRouter>
         </CartProvider>
