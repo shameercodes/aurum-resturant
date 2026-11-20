@@ -19,6 +19,7 @@ import Profile from './pages/Profile';
 import Contact from './pages/Contact';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import SalesAnalytics from "./pages/admin/SalesAnalytics";
+import Reservations from "./pages/Reservations";
 
 function Layout({ children }) {
   return (
@@ -66,6 +67,14 @@ export default function App() {
                 element={
                   <Layout>
                     <Contact />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/reservations"
+                element={
+                  <Layout>
+                    <Reservations />
                   </Layout>
                 }
               />

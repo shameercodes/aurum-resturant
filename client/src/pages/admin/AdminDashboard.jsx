@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import {
   FiPackage, FiShoppingCart, FiUsers, FiDollarSign, FiRefreshCw,
   FiEdit2, FiTrash2, FiPlus, FiSearch, FiAlertTriangle, FiX, FiCheck,
-  FiTrendingUp, FiClock, FiLogOut,
+  FiTrendingUp, FiClock, FiLogOut, FiGrid,FiCalendar
 } from 'react-icons/fi';
 import SalesAnalytics from "./SalesAnalytics";
+import TableManagement from "./TableManagement";
+import ReservationManagement from "./ReservationManagement";
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -19,6 +21,8 @@ const TABS = [
   { id: "products", label: "Products", icon: FiPackage },
   { id: "users", label: "Users", icon: FiUsers },
   { id: "analytics", label: "Sales Analytics", icon: FiTrendingUp },
+  { id: "tables", label: "Tables", icon: FiGrid },
+  { id: "reservations", label: "Reservations", icon: FiCalendar },
 ];
 
 const ORDER_STATUSES = ['pending', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
@@ -272,10 +276,12 @@ export default function AdminDashboard() {
       {msg && (
         <div
           className={`fixed right-4 top-20 z-[60] flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${
-            msg.type === 'err' ? 'bg-red-500 text-white' : 'bg-green-600 text-white'
+            msg.type === "err"
+              ? "bg-red-500 text-white"
+              : "bg-green-600 text-white"
           }`}
         >
-          {msg.type === 'err' ? <FiAlertTriangle /> : <FiCheck />}
+          {msg.type === "err" ? <FiAlertTriangle /> : <FiCheck />}
           {msg.text}
         </div>
       )}
@@ -283,9 +289,13 @@ export default function AdminDashboard() {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Admin Dashboard
+            </h1>
             <p className="mt-1 text-sm text-gray-500">
-              {user?.name ? `Signed in as ${user.name}` : 'Manage orders, products, users & analytics'}
+              {user?.name
+                ? `Signed in as ${user.name}`
+                : "Manage orders, products, users & analytics"}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -295,7 +305,7 @@ export default function AdminDashboard() {
               disabled={loading}
               className="btn-secondary !py-2 !px-4 text-sm"
             >
-              <FiRefreshCw className={loading ? 'animate-spin' : ''} /> Refresh
+              <FiRefreshCw className={loading ? "animate-spin" : ""} /> Refresh
             </button>
             <button
               type="button"
@@ -316,60 +326,98 @@ export default function AdminDashboard() {
               onClick={() => setTab(id)}
               className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition ${
                 tab === id
-                  ? 'border-brand-500 text-brand-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400'
+                  ? "border-brand-500 text-brand-600"
+                  : "border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400"
               }`}
             >
               <Icon />
               {label}
-              {id === 'orders' && stats && (
+              {id === "orders" && stats && (
                 <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs text-brand-700 dark:bg-brand-500/20 dark:text-brand-400">
                   {stats.totalOrders}
                 </span>
               )}
-              {id === 'products' && stats && (
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-gray-800">{stats.totalProducts}</span>
+              {id === "products" && stats && (
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-gray-800">
+                  {stats.totalProducts}
+                </span>
               )}
-              {id === 'users' && stats && (
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-gray-800">{stats.totalUsers}</span>
+              {id === "users" && stats && (
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-gray-800">
+                  {stats.totalUsers}
+                </span>
               )}
             </button>
           ))}
         </div>
 
-        {loading && tab === 'dashboard' ? (
+        {loading && tab === "dashboard" ? (
           <LoadingSpinner />
         ) : (
           <>
             {/* OVERVIEW */}
-            {tab === 'dashboard' && stats && (
+            {tab === "dashboard" && stats && (
               <div className="mt-8 space-y-8 animate-fade-in">
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                  <StatCard icon={FiShoppingCart} label="Total orders" value={stats.totalOrders} sub={`${stats.ordersToday} today`} />
-                  <StatCard icon={FiDollarSign} label="Revenue" value={`£${stats.totalRevenue?.toFixed(2)}`} sub="excl. cancelled" />
-                  <StatCard icon={FiUsers} label="Customers" value={stats.totalUsers} />
-                  <StatCard icon={FiPackage} label="Products" value={stats.totalProducts} />
-                  <StatCard icon={FiClock} label="Pending" value={stats.pendingOrders} sub="needs action" />
-                  <StatCard icon={FiTrendingUp} label="Today" value={stats.ordersToday} sub="new orders" />
+                  <StatCard
+                    icon={FiShoppingCart}
+                    label="Total orders"
+                    value={stats.totalOrders}
+                    sub={`${stats.ordersToday} today`}
+                  />
+                  <StatCard
+                    icon={FiDollarSign}
+                    label="Revenue"
+                    value={`£${stats.totalRevenue?.toFixed(2)}`}
+                    sub="excl. cancelled"
+                  />
+                  <StatCard
+                    icon={FiUsers}
+                    label="Customers"
+                    value={stats.totalUsers}
+                  />
+                  <StatCard
+                    icon={FiPackage}
+                    label="Products"
+                    value={stats.totalProducts}
+                  />
+                  <StatCard
+                    icon={FiClock}
+                    label="Pending"
+                    value={stats.pendingOrders}
+                    sub="needs action"
+                  />
+                  <StatCard
+                    icon={FiTrendingUp}
+                    label="Today"
+                    value={stats.ordersToday}
+                    sub="new orders"
+                  />
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-2">
                   <div className="card p-6">
                     <h2 className="font-semibold">Orders by status</h2>
                     <div className="mt-4 space-y-3">
-                      {ORDER_STATUSES.map(st => {
-                        const row = stats.statusCounts?.find(s => s._id === st);
+                      {ORDER_STATUSES.map((st) => {
+                        const row = stats.statusCounts?.find(
+                          (s) => s._id === st,
+                        );
                         const count = row?.count || 0;
                         return (
                           <div key={st}>
                             <div className="flex justify-between text-sm">
-                              <span className="capitalize text-gray-600 dark:text-gray-400">{st.replace(/_/g, ' ')}</span>
+                              <span className="capitalize text-gray-600 dark:text-gray-400">
+                                {st.replace(/_/g, " ")}
+                              </span>
                               <span className="font-medium">{count}</span>
                             </div>
                             <div className="mt-1 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                               <div
                                 className="h-full rounded-full bg-brand-500 transition-all"
-                                style={{ width: `${(count / maxStatus) * 100}%` }}
+                                style={{
+                                  width: `${(count / maxStatus) * 100}%`,
+                                }}
                               />
                             </div>
                           </div>
@@ -381,10 +429,15 @@ export default function AdminDashboard() {
                   <div className="card p-6">
                     <h2 className="font-semibold">Menu by category</h2>
                     <ul className="mt-4 space-y-2">
-                      {stats.categoryBreakdown?.map(c => (
-                        <li key={c._id} className="flex justify-between text-sm">
+                      {stats.categoryBreakdown?.map((c) => (
+                        <li
+                          key={c._id}
+                          className="flex justify-between text-sm"
+                        >
                           <span>{c._id}</span>
-                          <span className="text-gray-500">{c.count} items · avg £{c.avgPrice?.toFixed(2)}</span>
+                          <span className="text-gray-500">
+                            {c.count} items · avg £{c.avgPrice?.toFixed(2)}
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -397,14 +450,23 @@ export default function AdminDashboard() {
                     {stats.topProducts?.length ? (
                       <ul className="mt-4 space-y-2">
                         {stats.topProducts.map((p, i) => (
-                          <li key={p._id} className="flex justify-between text-sm">
-                            <span>{i + 1}. {p._id}</span>
-                            <span className="text-gray-500">{p.sold} sold · £{p.revenue?.toFixed(2)}</span>
+                          <li
+                            key={p._id}
+                            className="flex justify-between text-sm"
+                          >
+                            <span>
+                              {i + 1}. {p._id}
+                            </span>
+                            <span className="text-gray-500">
+                              {p.sold} sold · £{p.revenue?.toFixed(2)}
+                            </span>
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="mt-4 text-sm text-gray-500">No sales data yet</p>
+                      <p className="mt-4 text-sm text-gray-500">
+                        No sales data yet
+                      </p>
                     )}
                   </div>
 
@@ -414,15 +476,22 @@ export default function AdminDashboard() {
                     </h2>
                     {stats.lowStockProducts?.length ? (
                       <ul className="mt-4 space-y-2">
-                        {stats.lowStockProducts.map(p => (
-                          <li key={p._id} className="flex justify-between text-sm">
+                        {stats.lowStockProducts.map((p) => (
+                          <li
+                            key={p._id}
+                            className="flex justify-between text-sm"
+                          >
                             <span>{p.name}</span>
-                            <span className="font-medium text-red-500">{p.stock} left</span>
+                            <span className="font-medium text-red-500">
+                              {p.stock} left
+                            </span>
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="mt-4 text-sm text-gray-500">All items well stocked</p>
+                      <p className="mt-4 text-sm text-gray-500">
+                        All items well stocked
+                      </p>
                     )}
                   </div>
                 </div>
@@ -443,13 +512,32 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {stats.recentOrders?.map(o => (
-                          <tr key={o._id} className="border-t border-gray-100 dark:border-gray-800">
-                            <td className="p-3 font-mono">#{o._id.slice(-8)}</td>
-                            <td>{o.user?.name || '—'}<br /><span className="text-xs text-gray-500">{o.user?.email}</span></td>
-                            <td className="font-medium">£{o.totalAmount?.toFixed(2)}</td>
-                            <td><Badge className={statusColor[o.status]}>{o.status?.replace(/_/g, ' ')}</Badge></td>
-                            <td className="text-gray-500">{fmtDate(o.createdAt)}</td>
+                        {stats.recentOrders?.map((o) => (
+                          <tr
+                            key={o._id}
+                            className="border-t border-gray-100 dark:border-gray-800"
+                          >
+                            <td className="p-3 font-mono">
+                              #{o._id.slice(-8)}
+                            </td>
+                            <td>
+                              {o.user?.name || "—"}
+                              <br />
+                              <span className="text-xs text-gray-500">
+                                {o.user?.email}
+                              </span>
+                            </td>
+                            <td className="font-medium">
+                              £{o.totalAmount?.toFixed(2)}
+                            </td>
+                            <td>
+                              <Badge className={statusColor[o.status]}>
+                                {o.status?.replace(/_/g, " ")}
+                              </Badge>
+                            </td>
+                            <td className="text-gray-500">
+                              {fmtDate(o.createdAt)}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -460,7 +548,7 @@ export default function AdminDashboard() {
             )}
 
             {/* ORDERS */}
-            {tab === 'orders' && (
+            {tab === "orders" && (
               <div className="mt-8 space-y-4 animate-fade-in">
                 <div className="flex flex-wrap gap-3">
                   <div className="relative min-w-[200px] flex-1">
@@ -469,14 +557,24 @@ export default function AdminDashboard() {
                       className="input-field !pl-10"
                       placeholder="Search order ID, name, email, phone..."
                       value={orderSearch}
-                      onChange={e => setOrderSearch(e.target.value)}
+                      onChange={(e) => setOrderSearch(e.target.value)}
                     />
                   </div>
-                  <select className="input-field w-auto" value={orderStatus} onChange={e => setOrderStatus(e.target.value)}>
+                  <select
+                    className="input-field w-auto"
+                    value={orderStatus}
+                    onChange={(e) => setOrderStatus(e.target.value)}
+                  >
                     <option value="all">All statuses</option>
-                    {ORDER_STATUSES.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                    {ORDER_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {s.replace(/_/g, " ")}
+                      </option>
+                    ))}
                   </select>
-                  <span className="self-center text-sm text-gray-500">{orders.length} records</span>
+                  <span className="self-center text-sm text-gray-500">
+                    {orders.length} records
+                  </span>
                 </div>
 
                 <div className="card overflow-hidden">
@@ -495,39 +593,65 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {orders.map(o => (
+                        {orders.map((o) => (
                           <Fragment key={o._id}>
                             <tr className="border-t border-gray-100 dark:border-gray-800">
-                              <td className="p-3 font-mono text-xs">#{o._id.slice(-8)}</td>
+                              <td className="p-3 font-mono text-xs">
+                                #{o._id.slice(-8)}
+                              </td>
                               <td>
-                                <p className="font-medium">{o.user?.name || 'Guest'}</p>
-                                <p className="text-xs text-gray-500">{o.user?.email}</p>
-                                <p className="text-xs text-gray-500">{o.address?.phone}</p>
+                                <p className="font-medium">
+                                  {o.user?.name || "Guest"}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {o.user?.email}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {o.address?.phone}
+                                </p>
                               </td>
                               <td>{o.items?.length} item(s)</td>
-                              <td className="font-bold text-brand-600">£{o.totalAmount?.toFixed(2)}</td>
+                              <td className="font-bold text-brand-600">
+                                £{o.totalAmount?.toFixed(2)}
+                              </td>
                               <td>
-                                <span className="capitalize">{o.paymentMethod}</span>
+                                <span className="capitalize">
+                                  {o.paymentMethod}
+                                </span>
                                 <br />
-                                <span className="text-xs text-gray-500">{o.paymentStatus}</span>
+                                <span className="text-xs text-gray-500">
+                                  {o.paymentStatus}
+                                </span>
                               </td>
                               <td>
                                 <select
                                   value={o.status}
-                                  onChange={e => updateOrderStatus(o._id, e.target.value)}
+                                  onChange={(e) =>
+                                    updateOrderStatus(o._id, e.target.value)
+                                  }
                                   className="input-field !py-1 !text-xs min-w-[130px]"
                                 >
-                                  {ORDER_STATUSES.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                                  {ORDER_STATUSES.map((s) => (
+                                    <option key={s} value={s}>
+                                      {s.replace(/_/g, " ")}
+                                    </option>
+                                  ))}
                                 </select>
                               </td>
-                              <td className="whitespace-nowrap text-gray-500">{fmtDate(o.createdAt)}</td>
+                              <td className="whitespace-nowrap text-gray-500">
+                                {fmtDate(o.createdAt)}
+                              </td>
                               <td>
                                 <button
                                   type="button"
-                                  onClick={() => setExpandedOrder(expandedOrder === o._id ? null : o._id)}
+                                  onClick={() =>
+                                    setExpandedOrder(
+                                      expandedOrder === o._id ? null : o._id,
+                                    )
+                                  }
                                   className="text-brand-600 text-xs font-medium hover:underline"
                                 >
-                                  {expandedOrder === o._id ? 'Hide' : 'Details'}
+                                  {expandedOrder === o._id ? "Hide" : "Details"}
                                 </button>
                               </td>
                             </tr>
@@ -536,18 +660,46 @@ export default function AdminDashboard() {
                                 <td colSpan={8} className="p-4">
                                   <div className="grid gap-4 md:grid-cols-2">
                                     <div>
-                                      <p className="text-xs font-semibold uppercase text-gray-500">Delivery address</p>
-                                      <p className="mt-1 text-sm">{o.address?.street}, {o.address?.city} {o.address?.zip}</p>
-                                      {o.address?.notes && <p className="text-sm text-gray-500">Note: {o.address.notes}</p>}
+                                      <p className="text-xs font-semibold uppercase text-gray-500">
+                                        Delivery address
+                                      </p>
+                                      <p className="mt-1 text-sm">
+                                        {o.address?.street}, {o.address?.city}{" "}
+                                        {o.address?.zip}
+                                      </p>
+                                      {o.address?.notes && (
+                                        <p className="text-sm text-gray-500">
+                                          Note: {o.address.notes}
+                                        </p>
+                                      )}
                                     </div>
                                     <div>
-                                      <p className="text-xs font-semibold uppercase text-gray-500">Line items</p>
+                                      <p className="text-xs font-semibold uppercase text-gray-500">
+                                        Line items
+                                      </p>
                                       <ul className="mt-2 space-y-2">
                                         {o.items?.map((item, i) => (
-                                          <li key={i} className="flex items-center gap-3 text-sm">
-                                            <FoodImage product={{ image: item.image, name: item.name, category: 'Pizza' }} className="h-10 w-10 rounded-lg object-cover" />
-                                            <span className="flex-1">{item.name} × {item.quantity}</span>
-                                            <span className="font-medium">£{(item.price * item.quantity).toFixed(2)}</span>
+                                          <li
+                                            key={i}
+                                            className="flex items-center gap-3 text-sm"
+                                          >
+                                            <FoodImage
+                                              product={{
+                                                image: item.image,
+                                                name: item.name,
+                                                category: "Pizza",
+                                              }}
+                                              className="h-10 w-10 rounded-lg object-cover"
+                                            />
+                                            <span className="flex-1">
+                                              {item.name} × {item.quantity}
+                                            </span>
+                                            <span className="font-medium">
+                                              £
+                                              {(
+                                                item.price * item.quantity
+                                              ).toFixed(2)}
+                                            </span>
                                           </li>
                                         ))}
                                       </ul>
@@ -560,14 +712,18 @@ export default function AdminDashboard() {
                         ))}
                       </tbody>
                     </table>
-                    {!orders.length && <p className="p-8 text-center text-gray-500">No orders found</p>}
+                    {!orders.length && (
+                      <p className="p-8 text-center text-gray-500">
+                        No orders found
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
             {/* PRODUCTS */}
-            {tab === 'products' && (
+            {tab === "products" && (
               <div className="mt-8 space-y-4 animate-fade-in">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-1 flex-wrap gap-3">
@@ -577,18 +733,30 @@ export default function AdminDashboard() {
                         className="input-field !pl-10"
                         placeholder="Search products..."
                         value={productSearch}
-                        onChange={e => setProductSearch(e.target.value)}
+                        onChange={(e) => setProductSearch(e.target.value)}
                       />
                     </div>
-                    <select className="input-field w-auto" value={productCat} onChange={e => setProductCat(e.target.value)}>
+                    <select
+                      className="input-field w-auto"
+                      value={productCat}
+                      onChange={(e) => setProductCat(e.target.value)}
+                    >
                       <option value="all">All categories</option>
-                      {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                      {CATEGORIES.map((c) => (
+                        <option key={c}>{c}</option>
+                      ))}
                     </select>
-                    <span className="self-center text-sm text-gray-500">{products.length} records</span>
+                    <span className="self-center text-sm text-gray-500">
+                      {products.length} records
+                    </span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => { setEditingProduct(null); setForm(emptyProduct); setShowProductForm(true); }}
+                    onClick={() => {
+                      setEditingProduct(null);
+                      setForm(emptyProduct);
+                      setShowProductForm(true);
+                    }}
                     className="btn-primary !py-2 !px-4 text-sm"
                   >
                     <FiPlus /> Add product
@@ -598,8 +766,17 @@ export default function AdminDashboard() {
                 {showProductForm && (
                   <form onSubmit={saveProduct} className="card space-y-3 p-6">
                     <div className="flex items-center justify-between">
-                      <h2 className="font-semibold">{editingProduct ? 'Edit product' : 'New product'}</h2>
-                      <button type="button" onClick={() => { setShowProductForm(false); setEditingProduct(null); }} className="p-1 text-gray-500">
+                      <h2 className="font-semibold">
+                        {editingProduct ? "Edit product" : "New product"}
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProductForm(false);
+                          setEditingProduct(null);
+                        }}
+                        className="p-1 text-gray-500"
+                      >
                         <FiX />
                       </button>
                     </div>
@@ -609,7 +786,9 @@ export default function AdminDashboard() {
                         placeholder="Name"
                         required
                         value={form.name}
-                        onChange={v => setForm({ ...form, name: sanitize.text(v, 100) })}
+                        onChange={(v) =>
+                          setForm({ ...form, name: sanitize.text(v, 100) })
+                        }
                         error={formErrors.name}
                       />
                       <ValidatedInput
@@ -617,29 +796,43 @@ export default function AdminDashboard() {
                         placeholder="Price (numbers only)"
                         required
                         value={form.price}
-                        onChange={v => setForm({ ...form, price: v })}
+                        onChange={(v) => setForm({ ...form, price: v })}
                         error={formErrors.price}
                       />
-                      <select className="input-field" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
-                        {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                      <select
+                        className="input-field"
+                        value={form.category}
+                        onChange={(e) =>
+                          setForm({ ...form, category: e.target.value })
+                        }
+                      >
+                        {CATEGORIES.map((c) => (
+                          <option key={c}>{c}</option>
+                        ))}
                       </select>
                       <ValidatedInput
                         fieldType="stock"
                         placeholder="Stock (whole numbers)"
                         required
                         value={form.stock}
-                        onChange={v => setForm({ ...form, stock: v })}
+                        onChange={(v) => setForm({ ...form, stock: v })}
                         error={formErrors.stock}
                       />
                       <ValidatedInput
                         fieldType="rating"
                         placeholder="Rating 0–5"
                         value={form.rating}
-                        onChange={v => setForm({ ...form, rating: v })}
+                        onChange={(v) => setForm({ ...form, rating: v })}
                         error={formErrors.rating}
                       />
                       <label className="flex items-center gap-2 text-sm">
-                        <input type="checkbox" checked={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.checked })} />
+                        <input
+                          type="checkbox"
+                          checked={form.isActive}
+                          onChange={(e) =>
+                            setForm({ ...form, isActive: e.target.checked })
+                          }
+                        />
                         Active on menu
                       </label>
                     </div>
@@ -650,15 +843,41 @@ export default function AdminDashboard() {
                         required
                         rows={2}
                         value={form.description}
-                        onChange={e => setForm({ ...form, description: sanitize.text(e.target.value, 500) })}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            description: sanitize.text(e.target.value, 500),
+                          })
+                        }
                       />
-                      {formErrors.description && <p className="mt-1 text-xs text-red-500">{formErrors.description}</p>}
+                      {formErrors.description && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {formErrors.description}
+                        </p>
+                      )}
                     </div>
-                    <input type="file" accept="image/*" onChange={e => setFile(e.target.files[0])} className="text-sm" />
-                    <input className="input-field" placeholder="Or image URL" value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} />
-                    {formErrors.image && <p className="text-xs text-red-500">{formErrors.image}</p>}
-                    <button type="submit" className="btn-primary w-full sm:w-auto">
-                      {editingProduct ? 'Save changes' : 'Create product'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setFile(e.target.files[0])}
+                      className="text-sm"
+                    />
+                    <input
+                      className="input-field"
+                      placeholder="Or image URL"
+                      value={form.image}
+                      onChange={(e) =>
+                        setForm({ ...form, image: e.target.value })
+                      }
+                    />
+                    {formErrors.image && (
+                      <p className="text-xs text-red-500">{formErrors.image}</p>
+                    )}
+                    <button
+                      type="submit"
+                      className="btn-primary w-full sm:w-auto"
+                    >
+                      {editingProduct ? "Save changes" : "Create product"}
                     </button>
                   </form>
                 )}
@@ -678,34 +897,68 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {products.map(p => (
-                          <tr key={p._id} className="border-t border-gray-100 dark:border-gray-800">
+                        {products.map((p) => (
+                          <tr
+                            key={p._id}
+                            className="border-t border-gray-100 dark:border-gray-800"
+                          >
                             <td className="p-3">
                               <div className="flex items-center gap-3">
-                                <FoodImage product={p} className="h-12 w-12 rounded-lg object-cover" />
+                                <FoodImage
+                                  product={p}
+                                  className="h-12 w-12 rounded-lg object-cover"
+                                />
                                 <div>
                                   <p className="font-medium">{p.name}</p>
-                                  <p className="line-clamp-1 max-w-xs text-xs text-gray-500">{p.description}</p>
+                                  <p className="line-clamp-1 max-w-xs text-xs text-gray-500">
+                                    {p.description}
+                                  </p>
                                 </div>
                               </div>
                             </td>
                             <td>{p.category}</td>
-                            <td className="font-medium text-brand-600">£{p.price?.toFixed(2)}</td>
+                            <td className="font-medium text-brand-600">
+                              £{p.price?.toFixed(2)}
+                            </td>
                             <td>
-                              <span className={p.stock <= 10 ? 'font-semibold text-red-500' : ''}>{p.stock}</span>
+                              <span
+                                className={
+                                  p.stock <= 10
+                                    ? "font-semibold text-red-500"
+                                    : ""
+                                }
+                              >
+                                {p.stock}
+                              </span>
                             </td>
                             <td>{p.rating?.toFixed(1)}</td>
                             <td>
-                              <Badge className={p.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}>
-                                {p.isActive !== false ? 'Active' : 'Hidden'}
+                              <Badge
+                                className={
+                                  p.isActive !== false
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-600"
+                                }
+                              >
+                                {p.isActive !== false ? "Active" : "Hidden"}
                               </Badge>
                             </td>
                             <td>
                               <div className="flex gap-2">
-                                <button type="button" onClick={() => startEditProduct(p)} className="rounded-lg p-2 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10" title="Edit">
+                                <button
+                                  type="button"
+                                  onClick={() => startEditProduct(p)}
+                                  className="rounded-lg p-2 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10"
+                                  title="Edit"
+                                >
                                   <FiEdit2 />
                                 </button>
-                                <button type="button" onClick={() => deleteProduct(p._id)} className="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10" title="Delete">
+                                <button
+                                  type="button"
+                                  onClick={() => deleteProduct(p._id)}
+                                  className="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                                  title="Delete"
+                                >
                                   <FiTrash2 />
                                 </button>
                               </div>
@@ -714,14 +967,18 @@ export default function AdminDashboard() {
                         ))}
                       </tbody>
                     </table>
-                    {!products.length && <p className="p-8 text-center text-gray-500">No products found</p>}
+                    {!products.length && (
+                      <p className="p-8 text-center text-gray-500">
+                        No products found
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
             {/* USERS */}
-            {tab === 'users' && (
+            {tab === "users" && (
               <div className="mt-8 space-y-4 animate-fade-in">
                 <div className="relative max-w-md">
                   <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -729,7 +986,7 @@ export default function AdminDashboard() {
                     className="input-field !pl-10"
                     placeholder="Search name or email..."
                     value={userSearch}
-                    onChange={e => setUserSearch(e.target.value)}
+                    onChange={(e) => setUserSearch(e.target.value)}
                   />
                 </div>
                 <p className="text-sm text-gray-500">{users.length} records</p>
@@ -748,8 +1005,11 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {users.map(u => (
-                          <tr key={u._id} className="border-t border-gray-100 dark:border-gray-800">
+                        {users.map((u) => (
+                          <tr
+                            key={u._id}
+                            className="border-t border-gray-100 dark:border-gray-800"
+                          >
                             <td className="p-3">
                               <p className="font-medium">{u.name}</p>
                               <p className="text-xs text-gray-500">{u.email}</p>
@@ -757,9 +1017,11 @@ export default function AdminDashboard() {
                             <td>
                               <select
                                 value={u.role}
-                                onChange={e => updateUserRole(u._id, e.target.value)}
+                                onChange={(e) =>
+                                  updateUserRole(u._id, e.target.value)
+                                }
                                 className="input-field !py-1 !text-xs"
-                                disabled={u.role === 'admin'}
+                                disabled={u.role === "admin"}
                               >
                                 <option value="user">user</option>
                                 <option value="admin">admin</option>
@@ -768,19 +1030,29 @@ export default function AdminDashboard() {
                             <td>
                               <button
                                 type="button"
-                                onClick={() => toggleUserVerified(u._id, !u.isVerified)}
+                                onClick={() =>
+                                  toggleUserVerified(u._id, !u.isVerified)
+                                }
                                 className={`rounded-full px-2 py-1 text-xs font-medium ${
-                                  u.isVerified ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                                  u.isVerified
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-600"
                                 }`}
                               >
-                                {u.isVerified ? 'Verified' : 'Unverified'}
+                                {u.isVerified ? "Verified" : "Unverified"}
                               </button>
                             </td>
-                            <td className="text-gray-500">{u.phone || '—'}</td>
-                            <td className="whitespace-nowrap text-gray-500">{fmtDate(u.createdAt)}</td>
+                            <td className="text-gray-500">{u.phone || "—"}</td>
+                            <td className="whitespace-nowrap text-gray-500">
+                              {fmtDate(u.createdAt)}
+                            </td>
                             <td>
-                              {u.role !== 'admin' && (
-                                <button type="button" onClick={() => deleteUser(u._id)} className="text-red-500 hover:text-red-600">
+                              {u.role !== "admin" && (
+                                <button
+                                  type="button"
+                                  onClick={() => deleteUser(u._id)}
+                                  className="text-red-500 hover:text-red-600"
+                                >
                                   <FiTrash2 />
                                 </button>
                               )}
@@ -789,13 +1061,23 @@ export default function AdminDashboard() {
                         ))}
                       </tbody>
                     </table>
-                    {!users.length && <p className="p-8 text-center text-gray-500">No users found</p>}
+                    {!users.length && (
+                      <p className="p-8 text-center text-gray-500">
+                        No users found
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
-              )}
-           {/* SALES ANALYTICS */}
-            {tab === 'analytics' && <SalesAnalytics />}
+            )}
+            {/* TABLE MANAGEMENT */}
+            {tab === "tables" && <TableManagement />}
+
+            {/* SALES ANALYTICS */}
+            {tab === "analytics" && <SalesAnalytics />}
+
+            {/* RESERVATION MANAGEMENT */}
+            {tab === "reservations" && <ReservationManagement />}
           </>
         )}
       </div>

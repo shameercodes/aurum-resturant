@@ -260,5 +260,116 @@ exports.sendOrderStatusEmail = async (user, order) => {
   });
 };
 
-exports.sendReservationEmail = async () => {};
+
+const escapeHtml = (value = "") =>
+  String(value).replace(
+    /[&<>"']/g,
+    (char) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[char],
+  );
+
+// Initial booking request: pending approval
+exports.sendReservationEmail = async (reservation, table) => {
+  const name =
+    `${reservation.firstName || ""} ${reservation.lastName || ""}`.trim();
+  const tableNumber = table?.tableNumber || "To be assigned";
+
+  await sendMail({
+    to: reservation.email,
+    subject: `${brand} — Reservation Received`,
+    text: `Hi ${name},
+
+We have received your reservation request.
+
+Date: ${reservation.date}
+Time: ${reservation.time}
+Guests: ${reservation.guests}
+Table: ${tableNumber}
+
+Your reservation is currently pending confirmation. We will notify you once it has been reviewed.
+
+Thank you for choosing ${brand}.`,
+
+    html: wrap(`
+      <h2 style="color:#f59e0b;">Reservation Received!</h2>
+      <p>Hi ${escapeHtml(name)},</p>
+      <p>Thank you for choosing ${brand}. We have received your reservation request.</p>
+
+      <div style="background:#222;padding:20px;border-radius:8px;margin:20px 0;">
+        <p><strong>Date:</strong> ${escapeHtml(reservation.date)}</p>
+        <p><strong>Time:</strong> ${escapeHtml(reservation.time)}</p>
+        <p><strong>Guests:</strong> ${reservation.guests}</p>
+        <p><strong>Table:</strong> ${escapeHtml(tableNumber)}</p>
+        <p><strong>Status:</strong>
+          <span style="color:#f59e0b;">Pending Confirmation</span>
+        </p>
+      </div>
+
+      <p style="color:#aaa;">Our team will review your request and notify you of the final decision.</p>
+    `),
+  });
+};
+
+// Admin decision: confirmed or rejected
+exports.sendReservationStatusEmail = async (reservation) => {
+  const name =
+    `${reservation.firstName || ""} ${reservation.lastName || ""}`.trim();
+  const isConfirmed = reservation.status === "confirmed";
+
+  if (!["confirmed", "rejected"].includes(reservation.status)) {
+    return;
+  }
+
+  const subject = isConfirmed
+    ? "Your Reservation is Confirmed!"
+    : "Your Reservation Request Update";
+
+  const message = isConfirmed
+    ? "Great news! Your reservation has been confirmed. We look forward to welcoming you."
+    : "Unfortunately, we cannot accept your reservation request at this time. Please contact our restaurant if you need assistance.";
+
+  const color = isConfirmed ? "#22c55e" : "#ef4444";
+
+  await sendMail({
+    to: reservation.email,
+    subject: `${brand} — ${subject}`,
+    text: `Hi ${name},
+
+${message}
+
+Date: ${reservation.date}
+Time: ${reservation.time}
+Guests: ${reservation.guests}
+Table: ${reservation.table?.tableNumber || "Not assigned"}
+
+Thank you,
+${brand}`,
+
+    html: wrap(`
+      <h2 style="color:${color};">${subject}</h2>
+      <p>Hi ${escapeHtml(name)},</p>
+      <p>${message}</p>
+
+      <div style="background:#222;padding:20px;border-radius:8px;margin:20px 0;">
+        <p><strong>Date:</strong> ${escapeHtml(reservation.date)}</p>
+        <p><strong>Time:</strong> ${escapeHtml(reservation.time)}</p>
+        <p><strong>Guests:</strong> ${reservation.guests}</p>
+        <p><strong>Table:</strong> ${escapeHtml(reservation.table?.tableNumber || "Not assigned")}</p>
+        <p><strong>Status:</strong>
+          <span style="color:${color};">${escapeHtml(reservation.status.toUpperCase())}</span>
+        </p>
+      </div>
+
+      <p style="color:#aaa;">Thank you for choosing ${brand}.</p>
+    `),
+  });
+};
+
 exports.sendContactEmail = async () => {};
+

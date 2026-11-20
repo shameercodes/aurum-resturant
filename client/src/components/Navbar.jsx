@@ -70,12 +70,13 @@ export default function Navbar() {
   };
 
   const otherPages = [
-    { to: '/contact', label: 'Contact', show: true },
-    { to: '/profile', label: 'My account', show: !!user },
-    { to: '/admin', label: 'Admin dashboard', show: isAdmin },
-    { to: '/login', label: 'Sign in', show: !user },
-    { to: '/register', label: 'Register', show: !user },
-  ].filter(x => x.show);
+    { to: "/reservations", label: "Reservations", show: true },
+    { to: "/contact", label: "Contact", show: true },
+    { to: "/profile", label: "My account", show: !!user },
+    { to: "/admin", label: "Admin dashboard", show: isAdmin },
+    { to: "/login", label: "Sign in", show: !user },
+    { to: "/register", label: "Register", show: !user },
+  ].filter((x) => x.show);
 
   return (
     <header className="sticky top-0 z-50 border-b border-neutral-200/80 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
@@ -105,22 +106,30 @@ export default function Navbar() {
             <div className="relative" ref={pagesRef}>
               <button
                 type="button"
-                onClick={() => setPagesOpen(v => !v)}
+                onClick={() => setPagesOpen((v) => !v)}
                 className="flex items-center gap-1 text-[15px] font-medium tracking-wide text-neutral-600 transition hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
               >
                 Other Pages
-                <FiChevronDown className={`text-sm transition ${pagesOpen ? 'rotate-180' : ''}`} />
+                <FiChevronDown
+                  className={`text-sm transition ${pagesOpen ? "rotate-180" : ""}`}
+                />
               </button>
               {pagesOpen && (
                 <div className="absolute left-0 top-full z-50 mt-3 min-w-[200px] rounded-md border border-neutral-200 bg-white py-2 shadow-xl dark:border-neutral-700 dark:bg-neutral-900">
                   {otherPages.map(({ to, label }) => (
-                    <Link
+                    <NavLink
                       key={to}
                       to={to}
-                      className="block px-4 py-2.5 text-sm text-neutral-700 transition hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                      className={({ isActive }) =>
+                        `block px-4 py-2.5 text-sm transition ${
+                          isActive
+                            ? "bg-neutral-100 font-semibold text-neutral-900 dark:bg-neutral-800 dark:text-white"
+                            : "text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                        }`
+                      }
                     >
                       {label}
-                    </Link>
+                    </NavLink>
                   ))}
                   {user && (
                     <button
@@ -142,16 +151,13 @@ export default function Navbar() {
 
           {/* Right actions */}
           <div className="flex items-center gap-3 sm:gap-5">
-            <Link
-              to="/menu"
-              className="nav-btn-reserve hidden sm:inline-flex"
-            >
+            <Link to="/menu" className="nav-btn-reserve hidden sm:inline-flex">
               Order now
             </Link>
 
             <button
               type="button"
-              onClick={() => setSearchOpen(v => !v)}
+              onClick={() => setSearchOpen((v) => !v)}
               className="rounded-md p-2 text-neutral-700 transition hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
               aria-label="Search menu"
             >
@@ -162,10 +168,14 @@ export default function Navbar() {
               type="button"
               onClick={toggle}
               className="rounded-md p-2 text-neutral-700 transition hover:bg-neutral-100 dark:text-amber-400 dark:hover:bg-neutral-800"
-              aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-              title={dark ? 'Light mode' : 'Dark mode'}
+              aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+              title={dark ? "Light mode" : "Dark mode"}
             >
-              {dark ? <FiSun className="text-xl stroke-[1.5]" /> : <FiMoon className="text-xl stroke-[1.5]" />}
+              {dark ? (
+                <FiSun className="text-xl stroke-[1.5]" />
+              ) : (
+                <FiMoon className="text-xl stroke-[1.5]" />
+              )}
             </button>
 
             <Link
@@ -210,11 +220,15 @@ export default function Navbar() {
 
             <button
               type="button"
-              onClick={() => setMobileOpen(v => !v)}
+              onClick={() => setMobileOpen((v) => !v)}
               className="rounded-md p-2 text-neutral-800 lg:hidden dark:text-neutral-200"
-              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
             >
-              {mobileOpen ? <FiX className="text-xl" /> : <FiMenu className="text-xl" />}
+              {mobileOpen ? (
+                <FiX className="text-xl" />
+              ) : (
+                <FiMenu className="text-xl" />
+              )}
             </button>
           </div>
         </div>
@@ -222,7 +236,7 @@ export default function Navbar() {
         {/* Expandable search bar */}
         <div
           className={`overflow-hidden border-t border-neutral-100 transition-all duration-300 dark:border-neutral-800 ${
-            searchOpen ? 'max-h-20 pb-4 opacity-100' : 'max-h-0 opacity-0'
+            searchOpen ? "max-h-20 pb-4 opacity-100" : "max-h-0 opacity-0"
           }`}
         >
           <form onSubmit={submitSearch} className="relative pt-3">
@@ -230,7 +244,7 @@ export default function Navbar() {
             <input
               type="search"
               value={query}
-              onChange={e => setQuery(e.target.value)}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder="Search dishes..."
               className="w-full rounded-md border border-neutral-200 bg-neutral-50 py-2.5 pl-11 pr-4 text-sm outline-none focus:border-neutral-400 focus:ring-1 focus:ring-neutral-300 dark:border-neutral-700 dark:bg-neutral-900"
               autoFocus={searchOpen}
@@ -242,17 +256,26 @@ export default function Navbar() {
       {/* Mobile menu */}
       <div
         className={`border-t border-neutral-200 bg-white transition-all duration-300 lg:hidden dark:border-neutral-800 dark:bg-neutral-950 ${
-          mobileOpen ? 'max-h-[480px] opacity-100' : 'max-h-0 overflow-hidden opacity-0'
+          mobileOpen
+            ? "max-h-[560px] opacity-100"
+            : "max-h-0 overflow-hidden opacity-0"
         }`}
       >
         <nav className="mx-auto max-w-7xl space-y-1 px-5 py-4 sm:px-8">
-          {[...NAV_LINKS, { to: '/menu', label: 'Shop' }, { to: '/contact', label: 'Contact' }].map(({ to, label }) => (
+          {[
+            ...NAV_LINKS,
+            { to: "/menu", label: "Shop" },
+            { to: "/reservations", label: "Reservations" },
+            { to: "/contact", label: "Contact" },
+          ].map(({ to, label }) => (
             <NavLink
               key={`${to}-${label}`}
               to={to}
               className={({ isActive }) =>
                 `block rounded-md px-3 py-2.5 text-[15px] font-medium ${
-                  isActive ? 'bg-neutral-100 text-neutral-900' : 'text-neutral-600'
+                  isActive
+                    ? "bg-neutral-100 text-neutral-900"
+                    : "text-neutral-600"
                 }`
               }
             >
@@ -260,30 +283,58 @@ export default function Navbar() {
             </NavLink>
           ))}
           {isAdmin && (
-            <NavLink to="/admin" className="block rounded-md px-3 py-2.5 text-[15px] font-medium text-neutral-600">
+            <NavLink
+              to="/admin"
+              className="block rounded-md px-3 py-2.5 text-[15px] font-medium text-neutral-600"
+            >
               Admin
             </NavLink>
           )}
-          <Link to="/menu" className="nav-btn-reserve mt-3 w-full justify-center">
+          <Link
+            to="/menu"
+            className="nav-btn-reserve mt-3 w-full justify-center"
+          >
             Order now
           </Link>
           <div className="mt-4 flex items-center justify-between border-t border-neutral-100 pt-4 dark:border-neutral-800">
             {user ? (
               <>
-                <Link to="/profile" className="text-sm font-medium text-neutral-700">Profile</Link>
-                <button type="button" onClick={handleLogout} className="flex items-center gap-1 text-sm font-medium text-red-600">
+                <Link
+                  to="/profile"
+                  className="text-sm font-medium text-neutral-700"
+                >
+                  Profile
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex items-center gap-1 text-sm font-medium text-red-600"
+                >
                   <FiLogOut /> Sign out
                 </button>
               </>
             ) : (
               <>
-                <Link to="/login" className="flex items-center gap-1 text-sm font-medium text-neutral-700">
+                <Link
+                  to="/login"
+                  className="flex items-center gap-1 text-sm font-medium text-neutral-700"
+                >
                   <FiLogIn /> Sign in
                 </Link>
-                <Link to="/register" className="text-sm font-medium text-neutral-900">Register</Link>
+                <Link
+                  to="/register"
+                  className="text-sm font-medium text-neutral-900"
+                >
+                  Register
+                </Link>
               </>
             )}
-            <button type="button" onClick={toggle} className="rounded-md p-2 text-neutral-600" aria-label="Toggle theme">
+            <button
+              type="button"
+              onClick={toggle}
+              className="rounded-md p-2 text-neutral-600"
+              aria-label="Toggle theme"
+            >
               {dark ? <FiSun /> : <FiMoon />}
             </button>
           </div>
