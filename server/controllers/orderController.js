@@ -5,11 +5,12 @@ const Product = require("../models/Product");
 
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
-
 const {
   sendOrderConfirmation,
   sendOrderStatusEmail,
+  sendAdminOrderNotification,
 } = require("../config/email");
+
 const { validateAddress } = require("../utils/fieldValidation");
 
 const VALID_PAYMENT_METHODS = ["cod", "stripe", "mock"];
@@ -170,6 +171,12 @@ exports.createOrder = asyncHandler(async (req, res) => {
         console.error("Order confirmation email failed:", error.message);
       },
     );
+  }
+
+  if (populatedOrder) {
+    sendAdminOrderNotification(populatedOrder).catch((error) => {
+      console.error("Admin order notification failed:", error.message);
+    });
   }
 
   res.status(201).json({

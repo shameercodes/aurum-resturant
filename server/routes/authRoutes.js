@@ -10,7 +10,8 @@ const {
   getMe,
   updateProfile,
   logout,
-} = require('../controllers/authController');
+  updateAdminCredentials,
+} = require("../controllers/authController");
 const { protect } = require('../middleware/auth');
 const { writeLimiter, otpLimiter } = require('../middleware/rateLimiter');
 
@@ -24,5 +25,14 @@ router.post('/logout', protect, logout);
 
 router.get('/me', protect, getMe);
 router.patch('/me', protect, updateProfile);
+
+
+router.patch(
+  "/admin/credentials",
+  writeLimiter,
+  protect,
+  require("../middleware/auth").authorize("admin"),
+  updateAdminCredentials,
+);
 
 module.exports = router;

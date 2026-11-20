@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import {
   FiPackage, FiShoppingCart, FiUsers, FiDollarSign, FiRefreshCw,
   FiEdit2, FiTrash2, FiPlus, FiSearch, FiAlertTriangle, FiX, FiCheck,
-  FiTrendingUp, FiClock, FiLogOut, FiGrid,FiCalendar
+  FiTrendingUp, FiClock, FiLogOut, FiGrid,FiCalendar, FiSettings
 } from 'react-icons/fi';
 import SalesAnalytics from "./SalesAnalytics";
 import TableManagement from "./TableManagement";
 import ReservationManagement from "./ReservationManagement";
+import AdminAccountSettings from "./AdminAccountSettings";
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -23,6 +24,7 @@ const TABS = [
   { id: "analytics", label: "Sales Analytics", icon: FiTrendingUp },
   { id: "tables", label: "Tables", icon: FiGrid },
   { id: "reservations", label: "Reservations", icon: FiCalendar },
+  { id: "settings", label: "Account Settings", icon: FiSettings },
 ];
 
 const ORDER_STATUSES = ['pending', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
@@ -1078,6 +1080,9 @@ export default function AdminDashboard() {
 
             {/* RESERVATION MANAGEMENT */}
             {tab === "reservations" && <ReservationManagement />}
+
+            {/* ACCOUNT SETTINGS */}
+            {tab === "settings" && <AdminAccountSettings />}
           </>
         )}
       </div>

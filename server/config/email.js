@@ -1,5 +1,7 @@
 const https = require("https");
 
+const User = require("../models/User");
+
 const brand = process.env.APP_NAME || "Aurum Eats";
 
 const getFromAddress = () => (process.env.EMAIL_FROM || "").trim();
@@ -129,6 +131,37 @@ exports.sendOtpEmail = async (email, name, otp) => {
   });
 };
 
+// const getAdminEmail = async () => {
+//   const admin = await User.findOne({
+//     role: "admin",
+//     isVerified: true,
+//   }).select("email");
+
+//   if (!admin?.email) {
+//     throw new Error("Verified admin email not found.");
+//   }
+
+//   return admin.email;
+// };
+const getAdminEmail = async () => {
+  console.log("🔍 Searching for verified admin...");
+
+  const admin = await User.findOne({
+    role: "admin",
+    isVerified: true,
+  }).select("email role isVerified");
+
+  console.log("👤 Admin lookup result:", admin);
+
+  if (!admin?.email) {
+    throw new Error("Verified admin email not found.");
+  }
+
+  console.log("📧 Admin notification recipient found:", admin.email);
+
+  return admin.email;
+};
+
 exports.sendPasswordResetOtp = async (email, name, otp) => {
   const minutes = process.env.OTP_EXPIRE_MINUTES || 10;
   const code = String(otp);
@@ -146,77 +179,79 @@ exports.sendPasswordResetOtp = async (email, name, otp) => {
   });
 };
 
+
+
 exports.sendOrderConfirmation = async (user, order) => {
   const orderNumber = order._id.toString().slice(-6).toUpperCase();
 
-  const itemsHtml = order.items
+  const itemsText = order.items
     .map(
       (item) =>
-        `<tr>
-          <td style="padding:8px 0;color:#ccc;">
-            ${item.name} × ${item.quantity}
+        `${item.name} x ${item.quantity} — £${(
+          item.price * item.quantity
+        ).toFixed(2)}`,
+    )
+    .join("\n");
+
+  const itemsHtml = order.items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding:10px;color:#ccc;">
+            ${escapeHtml(item.name)} × ${item.quantity}
           </td>
-          <td style="text-align:right;color:#fff;">
+          <td style="padding:10px;text-align:right;color:#fff;">
             £${(item.price * item.quantity).toFixed(2)}
           </td>
-        </tr>`,
+        </tr>
+      `,
     )
     .join("");
 
   await sendMail({
     to: user.email,
-    subject: `${brand} — Your Order #${orderNumber} is Confirmed`,
+    subject: `${brand} — Order Confirmation #${orderNumber}`,
+
     text: `Hi ${user.name},
 
 Thank you for your order!
 
-Your order #${orderNumber} has been successfully received.
+Order: #${orderNumber}
 
-Total: £${order.totalAmount.toFixed(2)}
-Payment: ${order.paymentMethod.toUpperCase()}
+${itemsText}
+
+Total: £${Number(order.totalAmount).toFixed(2)}
+Payment: ${order.paymentMethod}
 Status: ${order.status}
 
-Thank you for choosing ${brand}!`,
+Thank you for choosing ${brand}.`,
 
     html: wrap(`
-      <h2 style="color:#22c55e;">Order Confirmed!</h2>
+      <h2 style="color:#f59e0b;">Order Confirmed!</h2>
 
-      <p>Hi ${user.name},</p>
+      <p>Hi ${escapeHtml(user.name)},</p>
+      <p>Thank you for placing your order with ${brand}.</p>
 
-      <p>
-        Thank you for your order! We have successfully received
-        your order and will update you as it progresses.
-      </p>
+      <p><strong>Order Number:</strong> #${orderNumber}</p>
 
-      <p>
-        Order number:
-        <strong>#${orderNumber}</strong>
-      </p>
-
-      <table style="width:100%;margin:20px 0;border-collapse:collapse;">
+      <table style="width:100%;border-collapse:collapse;">
         ${itemsHtml}
       </table>
 
-      <p style="font-size:1.1rem;">
-        <strong>Total: £${order.totalAmount.toFixed(2)}</strong>
-      </p>
+      <div style="background:#222;padding:20px;border-radius:8px;">
+        <p><strong>Total:</strong> £${Number(order.totalAmount).toFixed(2)}</p>
+        <p><strong>Payment:</strong> ${escapeHtml(order.paymentMethod)}</p>
+        <p><strong>Status:</strong> ${escapeHtml(order.status)}</p>
+      </div>
 
-      <p style="color:#aaa;font-size:14px;">
-        Payment: ${order.paymentMethod.toUpperCase()}
-      </p>
-
-      <p style="color:#aaa;font-size:14px;">
-        Order Status: ${order.status}
-      </p>
-
-      <p style="color:#aaa;font-size:14px;">
-        Delivery Address:
-        ${order.address.street}, ${order.address.city}
-        ${order.address.zip}
-      </p>
+      <p>Thank you for choosing ${brand}!</p>
     `),
   });
+
+  console.log("✅ Customer order confirmation email sent:", user.email);
 };
+
+
 
 exports.sendOrderStatusEmail = async (user, order) => {
   const orderNumber = order._id.toString().slice(-6).toUpperCase();
@@ -273,6 +308,125 @@ const escapeHtml = (value = "") =>
         "'": "&#39;",
       })[char],
   );
+
+
+exports.sendAdminOrderNotification = async (order) => {
+  const adminEmail = await getAdminEmail();
+
+  const orderNumber = order._id.toString().slice(-6).toUpperCase();
+  const customer = order.user;
+
+  const itemsHtml = order.items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding:10px;color:#ccc;">
+            ${escapeHtml(item.name)} × ${item.quantity}
+          </td>
+          <td style="padding:10px;text-align:right;color:#fff;">
+            £${(Number(item.price) * item.quantity).toFixed(2)}
+          </td>
+        </tr>
+      `,
+    )
+    .join("");
+
+  await sendMail({
+    to: adminEmail,
+    subject: `${brand} — New Order #${orderNumber}`,
+
+    text: `A new order has been received.
+
+Order: #${orderNumber}
+Customer: ${customer?.name || "Customer"}
+Email: ${customer?.email || "Unavailable"}
+Total: £${Number(order.totalAmount).toFixed(2)}
+Payment: ${order.paymentMethod}
+Status: ${order.status}
+
+Please review this order in your admin dashboard.`,
+
+    html: wrap(`
+      <h2 style="color:#f59e0b;">New Order Received!</h2>
+
+      <p>A customer has placed a new order.</p>
+
+      <div style="background:#222;padding:20px;border-radius:8px;">
+        <p><strong>Order:</strong> #${orderNumber}</p>
+        <p><strong>Customer:</strong> ${escapeHtml(customer?.name || "Customer")}</p>
+        <p><strong>Email:</strong> ${escapeHtml(customer?.email || "Unavailable")}</p>
+        <p><strong>Total:</strong> £${Number(order.totalAmount).toFixed(2)}</p>
+        <p><strong>Payment:</strong> ${escapeHtml(order.paymentMethod)}</p>
+        <p><strong>Status:</strong> ${escapeHtml(order.status)}</p>
+      </div>
+
+      <h3>Order Items</h3>
+
+      <table style="width:100%;border-collapse:collapse;">
+        ${itemsHtml}
+      </table>
+
+      <p><strong>Delivery Address:</strong></p>
+      <p>
+        ${escapeHtml(order.address?.street || "")},
+        ${escapeHtml(order.address?.city || "")},
+        ${escapeHtml(order.address?.zip || "")}
+      </p>
+
+      <p>Please review this order in your admin dashboard.</p>
+    `),
+  });
+
+  console.log("✅ Admin order notification sent:", adminEmail);
+};
+
+
+
+exports.sendAdminReservationNotification = async (reservation, table) => {
+  const adminEmail = await getAdminEmail();
+  console.log("📨 Sending reservation notification to admin:", adminEmail);
+
+  const customerName =
+    `${reservation.firstName || ""} ${reservation.lastName || ""}`.trim();
+
+  const tableNumber = table?.tableNumber || "Not assigned";
+
+  await sendMail({
+    to: adminEmail,
+    subject: `${brand} — New Reservation Received`,
+    text: `A new reservation has been received.
+
+Customer: ${customerName}
+Email: ${reservation.email}
+Phone: ${reservation.phone}
+Date: ${reservation.date}
+Time: ${reservation.time}
+Guests: ${reservation.guests}
+Table: ${tableNumber}
+Status: ${reservation.status}`,
+
+    html: wrap(`
+      <h2 style="color:#f59e0b;">New Reservation</h2>
+      <p>A customer has submitted a new reservation request.</p>
+
+      <div style="background:#222;padding:20px;border-radius:8px;">
+        <p><strong>Customer:</strong> ${escapeHtml(customerName)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(reservation.email)}</p>
+        <p><strong>Phone:</strong> ${escapeHtml(reservation.phone)}</p>
+        <p><strong>Date:</strong> ${escapeHtml(reservation.date)}</p>
+        <p><strong>Time:</strong> ${escapeHtml(reservation.time)}</p>
+        <p><strong>Guests:</strong> ${reservation.guests}</p>
+        <p><strong>Table:</strong> ${escapeHtml(tableNumber)}</p>
+        <p><strong>Status:</strong> Pending</p>
+        <p><strong>Occasion:</strong> ${escapeHtml(reservation.occasion || "Not specified")}</p>
+        <p><strong>Special requests:</strong> ${escapeHtml(reservation.specialRequests || "None")}</p>
+      </div>
+
+      <p>Please review this reservation in your admin dashboard.</p>
+    `),
+  });
+};
+
 
 // Initial booking request: pending approval
 exports.sendReservationEmail = async (reservation, table) => {
@@ -372,4 +526,3 @@ ${brand}`,
 };
 
 exports.sendContactEmail = async () => {};
-

@@ -5,6 +5,7 @@ const AppError = require("../utils/AppError");
 const {
   sendReservationEmail,
   sendReservationStatusEmail,
+  sendAdminReservationNotification,
 } = require("../config/email");
 
 const VALID_STATUSES = [
@@ -220,10 +221,15 @@ exports.createReservation = asyncHandler(async (req, res) => {
     await session.endSession();
   }
 
-  // Send email only after transaction successfully commits
-sendReservationEmail(reservation, assignedTable).catch((err) =>
-  console.error("⚠️ Reservation email failed:", err.message),
-);
+  // Send reservation confirmation to customer
+  sendReservationEmail(reservation, assignedTable).catch((err) =>
+    console.error("⚠️ Customer reservation email failed:", err.message),
+  );
+
+  // Send new reservation notification to admin
+  sendAdminReservationNotification(reservation, assignedTable).catch((err) =>
+    console.error("⚠️ Admin reservation notification failed:", err.message),
+  );
 
   // Return reservation details
   res.status(201).json({
@@ -341,6 +347,7 @@ exports.updateReservationStatus = asyncHandler(async (req, res) => {
 });
 
 
+
 // @desc    Delete a reservation
 // @route   DELETE /api/reservations/:id
 // @access  Private/Admin
@@ -351,7 +358,7 @@ exports.deleteReservation = asyncHandler(async (req, res) => {
     throw new AppError("Reservation not found", 404);
   }
 
-  await reservation.deleteOne();
+  await Reservation.findByIdAndDelete(req.params.id);
 
   res.status(200).json({
     success: true,

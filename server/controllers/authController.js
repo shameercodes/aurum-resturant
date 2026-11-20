@@ -262,6 +262,92 @@ exports.updateProfile = asyncHandler(async (req, res) => {
   res.json({ success: true, data: user });
 });
 
+
+
+
+
+
+
+
+
+
+
 exports.logout = asyncHandler(async (req, res) => {
   res.json({ success: true, message: "Logged out" });
+});
+
+// Update admin email and/or password
+exports.updateAdminCredentials = asyncHandler(async (req, res) => {
+  const { currentPassword, email, newPassword } = req.body;
+
+  if (!currentPassword || typeof currentPassword !== "string") {
+    throw new AppError("Current password is required", 400);
+  }
+
+  if (email === undefined && newPassword === undefined) {
+    throw new AppError("Provide a new email or password", 400);
+  }
+
+  const admin = await User.findById(req.user._id).select("+password");
+
+  if (!admin || admin.role !== "admin") {
+    throw new AppError("Admin account not found", 404);
+  }
+
+  const isPasswordValid = await admin.comparePassword(currentPassword);
+
+  if (!isPasswordValid) {
+    throw new AppError("Current password is incorrect", 401);
+  }
+
+  if (email !== undefined) {
+    if (typeof email !== "string") {
+      throw new AppError("Invalid email", 400);
+    }
+
+    const newEmail = assertString(email.trim().toLowerCase(), "Email", {
+      min: 5,
+      max: 120,
+      pattern: "email",
+    });
+
+    if (newEmail !== admin.email) {
+      const existingUser = await User.findOne({
+        email: newEmail,
+        _id: { $ne: admin._id },
+      });
+
+      if (existingUser) {
+        throw new AppError("This email is already registered", 409);
+      }
+
+      admin.email = newEmail;
+    }
+  }
+
+  if (newPassword !== undefined) {
+    if (typeof newPassword !== "string" || newPassword.length < 8) {
+      throw new AppError("New password must be at least 8 characters", 400);
+    }
+
+    admin.password = newPassword;
+  }
+
+  admin.tokenVersion += 1;
+  await admin.save();
+
+  const token = admin.getJwtToken();
+
+  res.status(200).json({
+    success: true,
+    message: "Admin credentials updated successfully",
+    token,
+    user: {
+      _id: admin._id,
+      name: admin.name,
+      email: admin.email,
+      role: admin.role,
+      isVerified: admin.isVerified,
+    },
+  });
 });

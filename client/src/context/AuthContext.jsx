@@ -60,11 +60,24 @@ export function AuthProvider({ children }) {
       persist(data.token, data.user);
       return data;
     });
+  
+  const updateAdminCredentials = async (credentials) => {
+    const { data } = await api.patch(
+      "/api/auth/admin/credentials",
+      credentials,
+    );
+
+    // Save the new token and updated admin information
+    persist(data.token, data.user);
+
+    return data;
+  };
 
   return (
     <AuthContext.Provider value={{
       user, loading, register, verifyOtp, resendOtp, login, logout,
-      forgotPassword, resetPassword, isAdmin: user?.role === 'admin',
+      forgotPassword, resetPassword, updateAdminCredentials,
+      isAdmin: user?.role === 'admin',
       isAuthenticated: !!user,
     }}>
       {children}
