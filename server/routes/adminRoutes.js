@@ -30,10 +30,11 @@ router.get('/users', getUsers);
 router.patch('/users/:id', validateObjectId, updateUser);
 router.delete('/users/:id', validateObjectId, deleteUser);
 
-router.route("/tables").post(createTable).get(getAllTables);
+router.route('/tables')
+  .post(createTable)
+  .get(getAllTables);
 
-router
-  .route("/tables/:id")
+router.route('/tables/:id')
   .patch(validateObjectId, updateTable)
   .delete(validateObjectId, deleteTable);
 
